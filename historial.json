@@ -1,0 +1,17 @@
+[
+    {
+        "categoria": "Comida",
+        "valor": 1200,
+        "fecha": "2025-12-15T01:45:47.532299"
+    },
+    {
+        "categoria": "Comida",
+        "valor": 4000,
+        "fecha": "2025-12-15T02:23:11.333726"
+    },
+    {
+        "categoria": "Transporte",
+        "valor": 1200,
+        "fecha": "2025-12-15T02:23:20.350463"
+    }
+]
