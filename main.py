@@ -2,10 +2,10 @@
 
 from datetime import datetime
 import json
+import os.path
+import uuid
 
 Salida = True
-Gastos = []
-
 #Funciones
 
 def mostrar_menu():
@@ -28,11 +28,19 @@ def mostrar_menu():
 
 #LEER HISTORIAL
 def leer_historial():
-    with open('historial.json', "r") as f:
-        data = json.load(f)
-    
-    return data
 
+    if os.path.isfile('historial.json'):
+        with open('historial.json', "r") as f:
+            data = json.load(f)
+        return data
+    else:
+        
+       with open('historial.json', 'w', encoding='utf-8') as f:
+        json.dump([], f, indent=4, ensure_ascii=False)
+
+        return []
+
+ 
 
 #MOSTRAR HISTORIAL DETALLADO
 def mostrar_historial():
@@ -43,26 +51,34 @@ def mostrar_historial():
 def agregar_gasto():
     Start = ''
 
+    gastos = leer_historial()
+
     while Start.lower() != "q":
         gasto_categoria = input('Ingrese la categoría de su gasto: ')
-        gasto_valor = int(input('Ingrese el valor del gasto: '))
+        gasto_valor = input('Ingrese el valor del gasto: ')
         gasto_categoria_formateado = gasto_categoria.capitalize().strip()
         fecha = datetime.now()
         fecha_formateada = fecha.isoformat()
 
         if gasto_categoria_formateado == '' or not gasto_categoria_formateado.replace(" ", "").isalpha():
+            print('Categoria tiene que tener un valor y no puede contener numeros')
             break
-        if gasto_valor == '':
+        if gasto_valor == '' or not gasto_valor.isdigit():
+            print('Valor del gasto tiene que tener contenido y no puede contener letras')
             break
 
-        Gastos.append({'categoria': gasto_categoria_formateado, 'valor': gasto_valor, 'fecha': fecha_formateada})
+        gasto_valor_formateado = int(gasto_valor)
+
+        nuevo_gasto = {'id': uuid.uuid4().hex,'categoria': gasto_categoria_formateado, 'valor': gasto_valor_formateado, 'fecha': fecha_formateada}
+
+        gastos.append(nuevo_gasto)
 
         print('Gasto registrado')
-        print(Gastos)
+
         Start = input('Ingrese la Q si desea finalizar sino apriete ENTER para seguir ')
 
     with open('historial.json', 'w', encoding='utf-8') as f:
-        json.dump(Gastos, f, indent=4, ensure_ascii=False)
+        json.dump(gastos, f, indent=4, ensure_ascii=False)
 
 
 def resumen_general():
@@ -88,12 +104,6 @@ def exportar_reporte():
             f.write(f"\n {categoria_normalizada} : {valor}\n")
         f.write(f"\nTotal Gastado: {sum(Resumen.values())}")
 
-
-def carga_gastos():
-    data = leer_historial()
-    Gastos.extend(data)
-
-carga_gastos()
 
 #Flujo general
 
