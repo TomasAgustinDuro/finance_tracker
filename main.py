@@ -1,6 +1,7 @@
 #Creación de menu y nueva lógica con dos archivos diferentes para diferentes informaciones
 
 from datetime import datetime
+from enum import _EnumNames
 import json
 import os.path
 import uuid
@@ -103,6 +104,40 @@ def exportar_reporte():
             categoria_normalizada = categoria.strip()
             f.write(f"\n {categoria_normalizada} : {valor}\n")
         f.write(f"\nTotal Gastado: {sum(Resumen.values())}")
+
+
+def borrar_gastos():
+    gastos = leer_historial()
+
+    if len(gastos) == 0:
+        print('La lista está vacia, es imposible borrar algo')
+    else:
+
+        for i, gasto in enumerate(gastos, start=1):
+            print(f"{i}. {gasto['categoria']}: ${gasto['valor']} - {gasto['fecha'][:10]}")
+
+
+        index_seleccion = input('Ingrese el numero del gasto que desea borrar: ')
+
+        if index_seleccion.isdigit() and int(index_seleccion) <= len(gastos):
+    
+            confirmacion = input(f"¿Esta seguro que desea eliminar: {gastos[int(index_seleccion) - 1]['categoria']}: ${gastos[int(index_seleccion) - 1]['valor']} - {gastos[int(index_seleccion)-1]['fecha'][:10]} Y/N" )
+
+            if confirmacion.upper() == 'Y':
+                del gastos[int(index_seleccion) - 1]
+                print('Gasto eliminado exitosamente')
+
+
+                with open('historial.json', 'w', encoding='utf-8') as f:
+                    json.dump(gastos, f, indent=4, ensure_ascii=False)
+
+                print(leer_historial())
+
+            else: 
+                print('No eliminado')
+
+        else:
+            print('El valor ingresado debe ser un numero')
 
 
 #Flujo general
