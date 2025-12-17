@@ -1,14 +1,8 @@
 [
     {
-        "id": "69c8ac4653c844a89e7cb897fbb7424d",
-        "categoria": "Comida",
-        "valor": 1200,
-        "fecha": "2025-12-16T02:10:29.009363"
-    },
-    {
         "id": "d39ccdb3cab8402c8d0334913cb4151f",
         "categoria": "Transporte",
-        "valor": 300,
+        "valor": 1000,
         "fecha": "2025-12-16T02:10:38.751080"
     },
     {
@@ -16,5 +10,11 @@
         "categoria": "Comida",
         "valor": 1200,
         "fecha": "2025-12-16T02:11:00.397421"
+    },
+    {
+        "id": "5a9504b927c4422b920fc7976e27dd3f",
+        "categoria": "Comida",
+        "valor": 1200,
+        "fecha": "2025-12-17T02:21:24.595290"
     }
 ]

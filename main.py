@@ -1,7 +1,6 @@
 #Creación de menu y nueva lógica con dos archivos diferentes para diferentes informaciones
 
 from datetime import datetime
-from enum import _EnumNames
 import json
 import os.path
 import uuid
@@ -22,7 +21,9 @@ def mostrar_menu():
     3) Ver historial detallado (con fechas)
     4) Exportar reporte a TXT
     5) Borrar un gasto
-    6) Salir
+    6) Modificar un gasto
+    7) Obtener todos los gastos de una categoria
+    8) Salir
 
     =====================================
     """)
@@ -139,6 +140,96 @@ def borrar_gastos():
         else:
             print('El valor ingresado debe ser un numero')
 
+def modificar_gasto():
+    gastos = leer_historial()
+
+    if len(gastos) == 0: 
+        print('La lista esta vacia por ende es imposible modificar gasto')
+    else: 
+        for i, gasto in enumerate(gastos, start=1):
+            print(f"{i}. {gasto['categoria']}: ${gasto['valor']} - {gasto['fecha'][:10]}")
+
+        index_seleccion = input('Ingrese el numero del gasto que desea modificar: ')
+
+        if index_seleccion.isdigit() and 1 <= int(index_seleccion) <= len(gastos):
+            print(f"Gasto actual: {gastos[int(index_seleccion) - 1]['categoria']}: ${gastos[int(index_seleccion)-1]['valor']}")
+            
+            categoria = input('Ingrese una nueva categoria (ENTER para mantener la categoria actual: ')
+            categoria_formateada = categoria.capitalize().strip()
+            valor = input('Ingrese un nuevo valor (ENTER para mantener el valor actual: ')
+
+            indice = int(index_seleccion) - 1
+            gasto_actual = gastos[indice]
+
+            nueva_categoria = categoria if categoria != '' else gasto_actual['categoria']
+            nuevo_valor = int(valor) if (valor != '' and valor.isdigit()) else gasto_actual['valor']
+
+            print(f"\nCambio: [{gasto_actual['categoria']}: ${gasto_actual['valor']}] → [{nueva_categoria}: ${nuevo_valor}]")
+            
+           
+            if categoria_formateada == '' and valor == '':
+                print('Sin cambios')
+            else:
+                confirmacion = input('¿Confirmar cambio? [Y/N]: ')
+
+                hubo_cambio = False
+
+                if confirmacion.upper() == 'Y':
+                    if categoria_formateada.replace(" ", "").isalpha() and categoria_formateada != '':
+                        gasto_actual['categoria'] = categoria_formateada
+                        hubo_cambio = True
+
+
+                    if valor.isdigit() and valor != '':
+                        gasto_actual['valor'] = int(valor)
+                        hubo_cambio = True            
+
+                    if hubo_cambio:
+                        with open('historial.json', 'w', encoding='utf-8') as f:
+                            json.dump(gastos, f, indent=4, ensure_ascii=False)
+
+                        print('Gasto modificado exitosamente')
+                
+                else: 
+                    print('Modificación cancelada')
+
+        
+        else:
+            print('El valor ingresado debe ser un numero')
+            
+    
+def retornar_por_categoria():
+    gastos = leer_historial()
+
+    if len(gastos) == 0:
+        print('La lista esta vacia')
+    else: 
+        categorias_unicas = set(gasto['categoria'] for gasto in gastos)
+
+        print(categorias_unicas)
+
+        categoria_buscada = input('Ingrese la categoria para filtrar: ')
+
+        if categoria_buscada != '' and categoria_buscada != ' ':
+            categoria_buscada_formateada = categoria_buscada.capitalize().strip()
+
+            coincidencias = [elemento for elemento in gastos if elemento['categoria'] == categoria_buscada_formateada] 
+
+            if len(coincidencias) > 0:
+            
+
+                print(coincidencias)
+
+            else:
+                print('No hubo coincidencias encontradas')
+        else:
+           print('Filtrado cancelado')
+
+        
+
+
+
+
 
 #Flujo general
 
@@ -156,7 +247,11 @@ while Salida:
     elif eleccion == "4":
         exportar_reporte()
     elif eleccion == "5":
-        continue
-        #Borrar gastos
+        borrar_gastos()
+    elif eleccion == '6':
+        modificar_gasto()
+    elif eleccion == '7':
+        retornar_por_categoria()
+
     else:
         Salida = False
