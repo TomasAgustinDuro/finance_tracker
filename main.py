@@ -1,6 +1,6 @@
 #Creación de menu y nueva lógica con dos archivos diferentes para diferentes informaciones
 
-from datetime import datetime
+from datetime import datetime, timedelta
 import json
 import os.path
 import uuid
@@ -228,14 +228,56 @@ def retornar_por_categoria():
         
 
 
+def porcentaje_gastos():
+    data = resumen_general()
+    valor_total= 0
 
 
+    for gasto_valor in data.values():
+        valor_total += gasto_valor
+
+    for categoria, valor in data.items():
+        print(f'{categoria} representa un {(valor / valor_total) * 100:.1f}% de los gastos totales registrados')
+
+def gasto_7_dias():
+    data = leer_historial()
+
+    if len(data) == 0:
+        print('No hay data que revisar')
+
+    hoy = datetime.now()
+    seven_days = hoy - timedelta(days=7)
+
+    ultimos_gastos = [ultimo for ultimo in data if seven_days <= datetime.fromisoformat(ultimo['fecha']) <= hoy]
+
+    if len(ultimos_gastos) == 0:
+        print('No hubo gastos los ultimos 7 dias')
+
+    ordenado = sorted(ultimos_gastos, key=lambda item: item['fecha'], reverse=True)
+
+    print(ordenado)
+
+def pico_gastos():
+    data = leer_historial()
+
+    if len(data)== 0:
+        print('No hay data que revisar')
+
+    mas_gastos = {}
+
+    for item in data:
+        mas_gastos[item['fecha'][:10]] = mas_gastos.get(item['fecha'][:10], 0) + int(item['valor'])
+    
+    print(mas_gastos)
+
+
+    
 
 #Flujo general
 
 while Salida:
 
-
+    
     eleccion = mostrar_menu()
 
     if eleccion == "1":
@@ -252,6 +294,12 @@ while Salida:
         modificar_gasto()
     elif eleccion == '7':
         retornar_por_categoria()
-
+    elif eleccion == '8':
+        porcentaje_gastos()
+    elif eleccion == '9':
+        gasto_7_dias()
+    elif eleccion== '10':
+        pico_gastos()
+        
     else:
         Salida = False
