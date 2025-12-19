@@ -260,7 +260,7 @@ def gasto_7_dias():
 def pico_gastos():
     data = leer_historial()
 
-    if len(data)== 0:
+    if not data:
         print('No hay data que revisar')
 
     mas_gastos = {}
@@ -268,7 +268,11 @@ def pico_gastos():
     for item in data:
         mas_gastos[item['fecha'][:10]] = mas_gastos.get(item['fecha'][:10], 0) + int(item['valor'])
     
-    print(mas_gastos)
+
+    fecha_max = max(mas_gastos, key=mas_gastos.get)
+    valor_max = mas_gastos[fecha_max]
+
+    print(f"El dia con mayor gastos es {fecha_max} con un total de ${valor_max}")
 
 
     
