@@ -14,7 +14,10 @@ def mostrar_menu():
     5) Borrar un gasto
     6) Modificar un gasto
     7) Obtener todos los gastos de una categoria
-    8) Salir
+    8) Ver porcentaje de gastos por categoria
+    9) Ver gastos de los ultimos 7 dias
+    10) Ver dia con mayor gasto
+    11) Salir
 
     =====================================
     """)

@@ -1,5 +1,4 @@
 from analytics import calcular_resumen_categoria
-from crud import leer_historial
 
 def exportar_reporte_general(data):
 
@@ -13,9 +12,7 @@ def exportar_reporte_general(data):
             f.write(f"\n{categoria_normalizada} : {valor}\n")
         f.write(f"\nTotal Gastado {valor_total}")
 
-def exportar_reporte_detallado():
-    data = leer_historial()
-
+def exportar_reporte_detallado(data):
     with open('resumen_detalado.txt', 'w') as f:
         for item in data: 
             categoria = item['categoria']
