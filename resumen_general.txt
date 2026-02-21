@@ -1,6 +1,0 @@
-
-Transporte : 1000
-
-Comida : 2400
-
-Total Gastado 3400

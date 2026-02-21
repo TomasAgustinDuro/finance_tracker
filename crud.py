@@ -4,14 +4,14 @@ import uuid
 from datetime import datetime
 
 
-def leer_historial():
+def read_history():
 
     if os.path.isfile("historial.json"):
         with open("historial.json", "r") as f:
             data = json.load(f)
 
-            for gasto in data:
-                gasto["valor"] = int(gasto["valor"])
+            for expense in data:
+                expense["value"] = int(expense["value"])
         return data
     else:
         with open("historial.json", "w", encoding="utf-8") as f:
@@ -21,148 +21,148 @@ def leer_historial():
 
 
 # AGREGAR GASTO
-def agregar_gasto():
-    Start = ""
+def add_expense():
+    start = ""
 
-    gastos = leer_historial()
+    expenses = read_history()
 
-    while Start.lower() != "q":
-        gasto_categoria = input("Ingrese la categoría de su gasto: ")
-        gasto_valor = input("Ingrese el valor del gasto: ")
-        gasto_categoria_formateado = gasto_categoria.capitalize().strip()
-        fecha = datetime.now()
-        fecha_formateada = fecha.isoformat()
+    while start.lower() != "q":
+        category_expense = input("Ingrese la categoría de su gasto: ")
+        value_expense = input("Ingrese el value del gasto: ")
+        category_expense_formatted = category_expense.capitalize().strip()
+        date = datetime.now()
+        date_formatted = date.isoformat()
 
         if (
-            gasto_categoria_formateado == ""
-            or not gasto_categoria_formateado.replace(" ", "").isalpha()
+            category_expense_formatted == ""
+            or not category_expense_formatted.replace(" ", "").isalpha()
         ):
-            print("Categoria tiene que tener un valor y no puede contener numeros")
+            print("category tiene que tener un value y no puede contener numeros")
             continue
-        if gasto_valor == "" or not gasto_valor.isdigit():
+        if value_expense == "" or not value_expense.isdigit():
             print(
-                "Valor del gasto tiene que tener contenido y no puede contener letras"
+                "value del gasto tiene que tener contenido y no puede contener letras"
             )
             continue
 
-        gasto_valor_formateado = int(gasto_valor)
+        value_expense_formateado = int(value_expense)
 
-        nuevo_gasto = {
+        new_expense = {
             "id": uuid.uuid4().hex,
-            "categoria": gasto_categoria_formateado,
-            "valor": gasto_valor_formateado,
-            "fecha": fecha_formateada,
+            "category": category_expense_formatted,
+            "value": value_expense_formateado,
+            "date": date_formatted,
         }
 
-        gastos.append(nuevo_gasto)
+        expenses.append(new_expense)
 
         print("Gasto registrado")
 
-        Start = input("Ingrese la Q si desea finalizar sino apriete ENTER para seguir ")
+        start = input("Ingrese la Q si desea finalizar sino apriete ENTER para seguir ")
 
     with open("historial.json", "w", encoding="utf-8") as f:
-        json.dump(gastos, f, indent=4, ensure_ascii=False)
+        json.dump(expenses, f, indent=4, ensure_ascii=False)
 
 
-def borrar_gastos():
-    gastos = leer_historial()
+def delete_expense():
+    expenses = read_history()
 
-    if len(gastos) == 0:
+    if len(expenses) == 0:
         print("La lista está vacia, es imposible borrar algo")
     else:
-        for i, gasto in enumerate(gastos, start=1):
+        for i, expense in enumerate(expenses, start=1):
             print(
-                f"{i}. {gasto['categoria']}: ${gasto['valor']} - {gasto['fecha'][:10]}"
+                f"{i}. {expense['category']}: ${expense['value']} - {expense['date'][:10]}"
             )
 
-        index_seleccion = input("Ingrese el numero del gasto que desea borrar: ")
+        index_selection = input("Ingrese el numero del gasto que desea borrar: ")
 
-        if index_seleccion.isdigit() and int(index_seleccion) <= len(gastos):
-            indice = int(index_seleccion) - 1
+        if index_selection.isdigit() and int(index_selection) <= len(expenses):
+            indice = int(index_selection) - 1
 
-            confirmacion = input(
-                f"¿Esta seguro que desea eliminar: {gastos[indice]['categoria']}: ${gastos[indice]['valor']} - {gastos[indice]['fecha'][:10]} Y/N"
+            confirmation = input(
+                f"¿Esta seguro que desea eliminar: {expenses[indice]['category']}: ${expenses[indice]['value']} - {expenses[indice]['date'][:10]} Y/N"
             )
 
-            if confirmacion.upper() == "Y":
-                del gastos[indice]
+            if confirmation.upper() == "Y":
+                del expenses[indice]
                 print("Gasto eliminado exitosamente")
 
                 with open("historial.json", "w", encoding="utf-8") as f:
-                    json.dump(gastos, f, indent=4, ensure_ascii=False)
+                    json.dump(expenses, f, indent=4, ensure_ascii=False)
 
             else:
                 print("No eliminado")
 
         else:
-            print("El valor ingresado debe ser un numero")
+            print("El value ingresado debe ser un numero")
 
 
-def modificar_gasto():
-    gastos = leer_historial()
+def modify_expense():
+    expenses = read_history()
 
-    if len(gastos) == 0:
+    if len(expenses) == 0:
         print("La lista esta vacia por ende es imposible modificar gasto")
     else:
-        for i, gasto in enumerate(gastos, start=1):
+        for i, expense in enumerate(expenses, start=1):
             print(
-                f"{i}. {gasto['categoria']}: ${gasto['valor']} - {gasto['fecha'][:10]}"
+                f"{i}. {expense['category']}: ${expense['value']} - {expense['date'][:10]}"
             )
 
-        index_seleccion = input("Ingrese el numero del gasto que desea modificar: ")
+        index_selection = input("Ingrese el numero del gasto que desea modificar: ")
 
-        if index_seleccion.isdigit() and 1 <= int(index_seleccion) <= len(gastos):
-            indice = int(index_seleccion) - 1
-
-            print(
-                f"Gasto actual: {gastos[indice]['categoria']}: ${gastos[indice]['valor']}"
-            )
-
-            categoria = input(
-                "Ingrese una nueva categoria (ENTER para mantener la categoria actual: "
-            )
-            categoria_formateada = categoria.capitalize().strip()
-            valor = input(
-                "Ingrese un nuevo valor (ENTER para mantener el valor actual: "
-            )
-
-            gasto_actual = gastos[indice]
-
-            nueva_categoria = (
-                categoria_formateada if categoria_formateada != "" else gasto_actual["categoria"]
-            )
-            nuevo_valor = (
-                int(valor)
-                if (valor != "" and valor.isdigit())
-                else gasto_actual["valor"]
-            )
+        if index_selection.isdigit() and 1 <= int(index_selection) <= len(expenses):
+            indice = int(index_selection) - 1
 
             print(
-                f"\nCambio: [{gasto_actual['categoria']}: ${gasto_actual['valor']}] → [{nueva_categoria}: ${nuevo_valor}]"
+                f"Gasto actual: {expenses[indice]['category']}: ${expenses[indice]['value']}"
             )
 
-            if categoria_formateada == "" and valor == "":
+            category = input(
+                "Ingrese una nueva category (ENTER para mantener la category actual: "
+            )
+            formatted_category = category.capitalize().strip()
+            value = input(
+                "Ingrese un nuevo value (ENTER para mantener el value actual: "
+            )
+
+            current_expense = expenses[indice]
+
+            new_category = (
+                formatted_category if formatted_category != "" else current_expense["category"]
+            )
+            new_value = (
+                int(value)
+                if (value != "" and value.isdigit())
+                else current_expense["value"]
+            )
+
+            print(
+                f"\nCambio: [{current_expense['category']}: ${current_expense['value']}] → [{new_category}: ${new_value}]"
+            )
+
+            if formatted_category == "" and value == "":
                 print("Sin cambios")
             else:
-                confirmacion = input("¿Confirmar cambio? [Y/N]: ")
+                confirmation = input("¿Confirmar cambio? [Y/N]: ")
 
-                hubo_cambio = False
+                change = False
 
-                if confirmacion.upper() == "Y":
+                if confirmation.upper() == "Y":
                     if (
-                        categoria_formateada.replace(" ", "").isalpha()
-                        and categoria_formateada != ""
+                        formatted_category.replace(" ", "").isalpha()
+                        and formatted_category != ""
                     ):
-                        gasto_actual["categoria"] = categoria_formateada
-                        hubo_cambio = True
+                        current_expense["category"] = formatted_category
+                        change = True
 
-                    if valor.isdigit() and valor != "":
-                        gasto_actual["valor"] = int(valor)
-                        hubo_cambio = True
+                    if value.isdigit() and value != "":
+                        current_expense["value"] = int(value)
+                        change = True
 
-                    if hubo_cambio:
+                    if change:
                         with open("historial.json", "w", encoding="utf-8") as f:
-                            json.dump(gastos, f, indent=4, ensure_ascii=False)
+                            json.dump(expenses, f, indent=4, ensure_ascii=False)
 
                         print("Gasto modificado exitosamente")
 
@@ -170,4 +170,4 @@ def modificar_gasto():
                     print("Modificación cancelada")
 
         else:
-            print("El valor ingresado debe ser un numero")
+            print("El value ingresado debe ser un numero")

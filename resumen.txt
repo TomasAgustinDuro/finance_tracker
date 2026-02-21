@@ -1,6 +1,0 @@
-
- Transporte : 1000
-
- Comida : 1200
-
- Comida : 1200

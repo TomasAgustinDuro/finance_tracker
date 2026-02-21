@@ -1,26 +1,24 @@
-from analytics import calcular_resumen_categoria
-
-def exportar_reporte_general(data):
-
-    resumen = calcular_resumen_categoria(data)
-    valor_total = 0
-
-    with open('resumen_general.txt', "w") as f:
-        for categoria, valor in resumen.items():
-            categoria_normalizada = categoria.strip()
-            valor_total += valor
-            f.write(f"\n{categoria_normalizada} : {valor}\n")
-        f.write(f"\nTotal Gastado {valor_total}")
-
-def exportar_reporte_detallado(data):
-    with open('resumen_detalado.txt', 'w') as f:
-        for item in data: 
-            categoria = item['categoria']
-            valor = item['valor']
-            fecha = item['fecha']
-            categoria_normalizada= categoria.strip()
-            f.write(f"\n{fecha} | {categoria_normalizada} : {valor}\n")
+from analytics import calculate_summary_by_category
 
 
+def export_general_report(data):
+
+    summary = calculate_summary_by_category(data)
+    total_value = 0
+
+    with open("resumen_general.txt", "w") as f:
+        for category, value in summary.items():
+            normalized_category = category.strip()
+            total_value += value
+            f.write(f"\n{normalized_category} : {value}\n")
+        f.write(f"\nTotal Gastado {total_value}")
 
 
+def export_detailed_report(data):
+    with open("resumen_detalado.txt", "w") as f:
+        for item in data:
+            category = item["category"]
+            value = item["value"]
+            date = item["date"]
+            normalized_category = category.strip()
+            f.write(f"\n{date} | {normalized_category} : {value}\n")
