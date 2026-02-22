@@ -4,6 +4,7 @@ from crud import read_history
 from menu import show_menu
 from exports import export_detailed_report, export_general_report
 from vistas import (
+    show_history,
     show_menu_add_expenses,
     show_menu_delete_expense,
     show_menu_modify_expense,
@@ -27,20 +28,22 @@ while out:
     elif menu_option == "2":
         show_summary_cat(data)
     elif menu_option == "3":
-        export_detailed_report(data)
+        show_history(data)
     elif menu_option == "4":
-        export_general_report(data)
+        export_detailed_report(data)
     elif menu_option == "5":
-        show_menu_delete_expense(data)
+        export_general_report(data)
     elif menu_option == "6":
-        show_menu_modify_expense(data)
+        show_menu_delete_expense(data)
     elif menu_option == "7":
-        show_filter_cat(data)
+        show_menu_modify_expense(data)
     elif menu_option == "8":
-        show_percentage(data)
+        show_filter_cat(data)
     elif menu_option == "9":
-        show_week(data)
+        show_percentage(data)
     elif menu_option == "10":
+        show_week(data)
+    elif menu_option == "11":
         show_top_expenses(data)
 
     else:
