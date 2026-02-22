@@ -1,0 +1,26 @@
+[
+    {
+        "id": "dbd1167d1247411f95f195adf7f43791",
+        "category": "Transporte",
+        "value": 600,
+        "date": "2026-02-22T14:43:21.615040"
+    },
+    {
+        "id": "d87f592aac3c499ea09d93895f3d5991",
+        "category": "Comida",
+        "value": 1200,
+        "date": "2026-02-22T14:44:44.457685"
+    },
+    {
+        "id": "e4dd401a09ea4d50816677efe938f2e9",
+        "category": "Comida",
+        "value": 1500,
+        "date": "2026-02-22T14:44:50.657028"
+    },
+    {
+        "id": "8142147ef09f4c0c97091d2adfc795a7",
+        "category": "Varios",
+        "value": 500,
+        "date": "2026-02-22T14:44:56.102357"
+    }
+]
