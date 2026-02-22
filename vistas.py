@@ -11,6 +11,9 @@ def show_history(data):
 def show_percentage(data):
     information = calculate_expense_percentage(data)
 
+    if not information: 
+        print('No hay información con la que calcualr los porcentajes')
+
     for category, value in information.items():
         print(
             f"{category} representa un {value:.1f}% de los expenses totales registrados"
@@ -20,6 +23,9 @@ def show_percentage(data):
 def show_top_expenses(data):
     values = get_top_expense_day(data)
 
+    if not values: 
+        print('No hay información para mostrar')
+
     print(
         f"El dia con mayor expenses es {values['date']} con un total de ${values['value']}"
     )
@@ -27,6 +33,9 @@ def show_top_expenses(data):
 
 def show_summary_cat(data):
     summary = calculate_summary_by_category(data)
+
+    if not summary:
+        print('No hay información para mostrar')
 
     for category, value in summary.items():
         print(f"{category}: {value}")
@@ -36,7 +45,7 @@ def show_week(data):
     week = get_week_expenses(data)
 
     if not week:
-        print("No hubo expenses en los últimos dias")
+        print("No hubo gastos en los últimos dias")
     else:
         for expense in week:
             print(f"{expense['date'][:10]} - {expense['category']}: ${expense['value']}")

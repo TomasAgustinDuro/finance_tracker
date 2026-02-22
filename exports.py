@@ -4,6 +4,10 @@ from analytics import calculate_summary_by_category
 def export_general_report(data):
 
     summary = calculate_summary_by_category(data)
+
+    if not summary:
+        print('No hay información para escribir')
+
     total_value = 0
 
     with open("resumen_general.txt", "w") as f:

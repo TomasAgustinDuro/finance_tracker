@@ -5,7 +5,6 @@ from datetime import datetime
 
 
 def read_history():
-
     if os.path.isfile("historial.json"):
         with open("historial.json", "r") as f:
             data = json.load(f)
