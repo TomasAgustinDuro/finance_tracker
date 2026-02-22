@@ -1,70 +1,65 @@
-from analytics import (
-    porcentaje_gastos,
-    pico_gastos,
-    calcular_resumen_categoria,
-    gasto_7_dias,
-)
+from analytics import calculate_expense_percentage, get_top_expense_day, calculate_summary_by_category, get_week_expenses
 
-from filters import obtener_categorias, filtrar_por_categoria
+from filters import get_unique_categories, filter_by_category
 
 
-def mostrar_historial(data):
-    for gasto in data:
-        print(f"{gasto['fecha'][:10]} - {gasto['categoria']}: ${gasto['valor']}")
+def show_history(data):
+    for expense in data:
+        print(f"{expense['date'][:10]} - {expense['category']}: ${expense['value']}")
 
 
-def mostrar_porcentajes(data):
-    informacion = porcentaje_gastos(data)
+def show_percentage(data):
+    information = calculate_expense_percentage(data)
 
-    for categoria, valor in informacion.items():
+    for category, value in information.items():
         print(
-            f"{categoria} representa un {valor:.1f}% de los gastos totales registrados"
+            f"{category} representa un {value:.1f}% de los expenses totales registrados"
         )
 
 
-def mostrar_pico_gastos(data):
-    values = pico_gastos(data)
+def show_top_expenses(data):
+    values = get_top_expense_day(data)
 
     print(
-        f"El dia con mayor gastos es {values['fecha']} con un total de ${values['valor']}"
+        f"El dia con mayor expenses es {values['date']} con un total de ${values['value']}"
     )
 
 
-def mostrar_resumen_categoria(data):
-    summary = calcular_resumen_categoria(data)
+def show_summary_cat(data):
+    summary = calculate_summary_by_category(data)
 
-    for categoria, valor in summary.items():
-        print(f"{categoria}: {valor}")
+    for category, value in summary.items():
+        print(f"{category}: {value}")
 
 
-def mostrar_semana(data):
-    week = gasto_7_dias(data)
+def show_week(data):
+    week = get_week_expenses(data)
 
     if not week:
-        print("No hubo gastos en los últimos dias")
+        print("No hubo expenses en los últimos dias")
     else:
-        for gasto in week:
-            print(f"{gasto['fecha'][:10]} - {gasto['categoria']}: ${gasto['valor']}")
+        for expense in week:
+            print(f"{expense['date'][:10]} - {expense['category']}: ${expense['value']}")
 
 
-def mostrar_filtro_categoria(data):
-    categorias = obtener_categorias(data)
+def show_filter_cat(data):
+    categories = get_unique_categories(data)
 
-    for categoria in categorias:
-        print(categoria)
+    for category in categories:
+        print(category)
 
-    categoria = input("Ingrese la categoria para filtrar: ")
+    category = input("Ingrese la category para filtrar: ")
 
-    if categoria.strip() == "":
-        print("Campo categoria vacio")
+    if category.strip() == "":
+        print("Campo category vacio")
         return
 
-    categoria_formateada = categoria.capitalize().strip()
+    formatted_category = category.capitalize().strip()
 
-    resultado = filtrar_por_categoria(data, categoria_formateada)
+    result = filter_by_category(data, formatted_category)
 
-    if len(resultado) > 0:
-        for gasto in resultado:
-            print(f"{gasto['fecha'][:10]} - {gasto['categoria']}: ${gasto['valor']}")
+    if len(result) > 0:
+        for expense in result:
+            print(f"{expense['date'][:10]} - {expense['category']}: ${expense['value']}")
     else:
         print("No hubo coincidencias encontradas")

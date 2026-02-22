@@ -1,13 +1,12 @@
-def obtener_categorias(data):
-
+def get_unique_categories(data):
     if len(data) == 0:
         return []
     else:
-        return set(gasto["categoria"] for gasto in data)
+        return set(expense["category"] for expense in data)
 
 
-def filtrar_por_categoria(data, categoria):
+def filter_by_category(data, category):
     if len(data) == 0:
         return []
     else:
-        return [elemento for elemento in data if elemento["categoria"] == categoria]
+        return [element for element in data if element["category"] == category]

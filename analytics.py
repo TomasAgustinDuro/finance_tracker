@@ -1,103 +1,103 @@
 from datetime import datetime, timedelta
 
 
-def porcentaje_gastos(data):
-    valor_total = 0
+def calculate_expense_percentage(data):
+    total_value = 0
 
     if len(data) == 0:
         print("No hay data que revisar")
         return {}
 
-    resumen = {}
+    summary = {}
 
     for item in data:
-        cat = item["categoria"]
-        val = item["valor"]
-        valor_total += item['valor']
-        resumen[cat] = resumen.get(cat, 0) + val
+        cat = item["category"]
+        val = item["value"]
+        total_value += item['value']
+        summary[cat] = summary.get(cat, 0) + val
 
-    porcentajes = {}
+    percentages = {}
 
-    for categoria, valor in resumen.items():
-        porcentajes[categoria] = (valor / valor_total) * 100
+    for category, value in summary.items():
+        percentages[category] = (value / total_value) * 100
 
-    return porcentajes
+    return percentages
 
 
-def gasto_7_dias(data):
+def get_week_expenses(data):
     if len(data) == 0:
         print("No hay data que revisar")
 
-    hoy = datetime.now()
-    seven_days = hoy - timedelta(days=7)
+    today = datetime.now()
+    week = today - timedelta(days=7)
 
-    ultimos_gastos = [
-        ultimo
-        for ultimo in data
-        if seven_days <= datetime.fromisoformat(ultimo["fecha"]) <= hoy
+    last_expenses = [
+        last
+        for last in data
+        if week <= datetime.fromisoformat(last["date"]) <= today
     ]
 
-    if len(ultimos_gastos) == 0:
+    if len(last_expenses) == 0:
         print("No hubo gastos los ultimos 7 dias")
 
-    ordenado = sorted(ultimos_gastos, key=lambda item: item["fecha"], reverse=True)
+    sorted_expenses = sorted(last_expenses, key=lambda item: item["date"], reverse=True)
 
-    return ordenado
+    return sorted_expenses
 
 
-def pico_gastos(data):
+def get_top_expense_day(data):
     if not data:
         print("No hay data que revisar")
 
-    mas_gastos = {}
+    more_expenses = {}
 
     for item in data:
-        mas_gastos[item["fecha"][:10]] = (
-            mas_gastos.get(item["fecha"][:10], 0) + item["valor"]
+        more_expenses[item["date"][:10]] = (
+            more_expenses.get(item["date"][:10], 0) + item["value"]
         )
 
-    fecha_max = max(mas_gastos, key=mas_gastos.get)
-    valor_max = mas_gastos[fecha_max]
+    max_date = max(more_expenses, key=more_expenses.get)
+    max_value = more_expenses[max_date]
 
-    return {"fecha": fecha_max, "valor": valor_max}
+    return {"date": max_date, "value": max_value}
 
 
-def calcular_resumen_categoria(data):
-    resumen = {}
+def calculate_summary_by_category(data):
+    summary = {}
     for item in data:
-        resumen[item["categoria"]] = resumen.get(item["categoria"], 0) + item["valor"]
+        summary[item["category"]] = summary.get(item["category"], 0) + item["value"]
 
-    return resumen
+    return summary
 
 
-def promedio_diario(data):
-    ultimos_siete = gasto_7_dias(data)
-    total_siete_dias = 0
+def calculate_daily_average(data):
+    last_week = get_week_expenses(data)
+    total_week = 0
 
-    if not ultimos_siete:
+    if not last_week:
         return 0
 
-    for gasto_valor in ultimos_siete:
-        total_siete_dias += gasto_valor["valor"]
+    for expense_value in last_week:
+        total_week += expense_value["value"]
 
-    return total_siete_dias / 7
+    return total_week / 7
 
 
-def promedio_historico_diario(data):
-    dias_con_gasto = []
-    gastos_valor = 0
+def calculate_historical_daily_average(data):
+    days_with_expense = []
+    value_expense = 0
 
     if not data:
         return 0
 
-    for gasto_fecha in data:
-        dias_con_gasto.append(gasto_fecha["fecha"][:10])
+    for expense_date in data:
+        days_with_expense.append(expense_date["date"][:10])
 
-    dias_unicos = set(dias_con_gasto)
+    unique_days = set(days_with_expense)
 
-    for gasto in data:
-        gastos_valor += gasto["valor"]
+    for expense in data:
+        value_expense += expense["value"]
 
-    promedio = gastos_valor / len(dias_unicos)
+    average = value_expense / len(unique_days)
 
-    return promedio
+    return average

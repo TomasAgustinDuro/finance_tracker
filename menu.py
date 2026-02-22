@@ -1,6 +1,6 @@
 
-def mostrar_menu():
-    eleccion = input("""
+def show_menu():
+    menu_option = input("""
     =====================================
          GESTOR DE GASTOS 🧾
     =====================================
@@ -22,5 +22,5 @@ def mostrar_menu():
     =====================================
     """)
 
-    return eleccion
+    return menu_option
 
