@@ -1,11 +1,9 @@
 from datetime import datetime, timedelta
 
-
 def calculate_expense_percentage(data):
     total_value = 0
 
     if len(data) == 0:
-        print("No hay data que revisar")
         return {}
 
     summary = {}
@@ -23,10 +21,9 @@ def calculate_expense_percentage(data):
 
     return percentages
 
-
 def get_week_expenses(data):
     if len(data) == 0:
-        print("No hay data que revisar")
+        return {}
 
     today = datetime.now()
     week = today - timedelta(days=7)
@@ -44,10 +41,9 @@ def get_week_expenses(data):
 
     return sorted_expenses
 
-
 def get_top_expense_day(data):
     if not data:
-        print("No hay data que revisar")
+        return {}
 
     more_expenses = {}
 
@@ -61,15 +57,17 @@ def get_top_expense_day(data):
 
     return {"date": max_date, "value": max_value}
 
-
 def calculate_summary_by_category(data):
+    if not data:
+        return{}
+
     summary = {}
     for item in data:
         summary[item["category"]] = summary.get(item["category"], 0) + item["value"]
 
     return summary
 
-
+# Helper
 def calculate_daily_average(data):
     last_week = get_week_expenses(data)
     total_week = 0
@@ -82,7 +80,7 @@ def calculate_daily_average(data):
 
     return total_week / 7
 
-
+# Helper
 def calculate_historical_daily_average(data):
     days_with_expense = []
     value_expense = 0

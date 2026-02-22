@@ -1,9 +1,12 @@
 # Creación de menu y nueva lógica con dos archivos diferentes para diferentes informaciones
 
-from crud import read_history, add_expense, modify_expense, delete_expense
+from crud import read_history
 from menu import show_menu
 from exports import export_detailed_report, export_general_report
 from vistas import (
+    show_menu_add_expenses,
+    show_menu_delete_expense,
+    show_menu_modify_expense,
     show_top_expenses,
     show_percentage,
     show_week,
@@ -20,7 +23,7 @@ while out:
     menu_option = show_menu()
 
     if menu_option == "1":
-        add_expense()
+        show_menu_add_expenses()
     elif menu_option == "2":
         show_summary_cat(data)
     elif menu_option == "3":
@@ -28,9 +31,9 @@ while out:
     elif menu_option == "4":
         export_general_report(data)
     elif menu_option == "5":
-        delete_expense()
+        show_menu_delete_expense(data)
     elif menu_option == "6":
-        modify_expense()
+        show_menu_modify_expense(data)
     elif menu_option == "7":
         show_filter_cat(data)
     elif menu_option == "8":
