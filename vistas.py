@@ -26,7 +26,6 @@ def show_percentage(data):
             f"{category} representa un {value:.1f}% de los expenses totales registrados"
         )
 
-
 def show_top_expenses(data):
     values = get_top_expense_day(data)
 
