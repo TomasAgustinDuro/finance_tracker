@@ -21,6 +21,7 @@ def read_history():
 
         return []
 
+
 # AGREGAR GASTO
 def add_expense(category_expense_formatted, value_expense_formatted):
 
@@ -41,7 +42,7 @@ def add_expense(category_expense_formatted, value_expense_formatted):
 
         return True
 
-    except Exception:
+    except (IOError, PermissionError) :
         return False
 
 
@@ -52,25 +53,22 @@ def delete_expense(indice, data):
             json.dump(data, f, indent=4, ensure_ascii=False)
 
         return True
-    except Exception:
+    except (IOError, PermissionError) :
         return False
+
 
 def modify_expense(data, indice, new_category=None, new_value=None):
     current_expense = data[indice]
 
     if new_category:
-        current_expense['category'] = new_category
+        current_expense["category"] = new_category
 
     if new_value:
-        current_expense['value'] = new_value
-    
+        current_expense["value"] = new_value
+
     try:
         with open("historial.json", "w", encoding="utf-8") as f:
             json.dump(data, f, indent=4, ensure_ascii=False)
         return True
-    except Exception:
+    except (IOError, PermissionError) :
         return False
-
-   
-
-    
