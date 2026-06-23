@@ -1,3 +1,10 @@
+"""Capa de presentación y coordinación de flujos de usuario.
+
+Recibe datos ya cargados y procesados, los muestra en consola, y gestiona
+los inputs interactivos para agregar, borrar y modificar gastos.
+No accede a archivos directamente — delega toda persistencia a crud.py.
+"""
+
 from analytics import (
     calculate_expense_percentage,
     get_top_expense_day,
@@ -11,11 +18,29 @@ from filters import get_unique_categories, filter_by_category
 
 
 def show_history(data):
+    """Imprime en consola el historial completo de gastos.
+
+    Formato de cada línea: 'YYYY-MM-DD - CATEGORIA: $MONTO'
+
+    Args:
+        data (list[dict]): Lista de gastos con campos 'date', 'category' y 'value'.
+
+    Returns:
+        None
+    """
     for expense in data:
         print(f"{expense['date'][:10]} - {expense['category']}: ${expense['value']}")
 
 
 def show_percentage(data):
+    """Imprime en consola el porcentaje que representa cada categoría sobre el total gastado.
+
+    Args:
+        data (list[dict]): Lista de gastos con campos 'category' y 'value'.
+
+    Returns:
+        None
+    """
     information = calculate_expense_percentage(data)
 
     if not information:
@@ -27,6 +52,14 @@ def show_percentage(data):
         )
 
 def show_top_expenses(data):
+    """Imprime en consola el día con mayor gasto acumulado del historial.
+
+    Args:
+        data (list[dict]): Lista de gastos con campos 'date' y 'value'.
+
+    Returns:
+        None
+    """
     values = get_top_expense_day(data)
 
     if not values:
@@ -38,6 +71,14 @@ def show_top_expenses(data):
 
 
 def show_menu_add_expenses():
+    """Flujo interactivo para agregar uno o más gastos nuevos.
+
+    Solicita al usuario categoría y monto, valida ambos campos y llama a add_expense.
+    El loop continúa hasta que el usuario ingresa 'Q' para salir.
+
+    Returns:
+        None
+    """
     start = ""
 
     while start.lower() != "q":
@@ -70,6 +111,17 @@ def show_menu_add_expenses():
 
 
 def show_menu_delete_expense(data):
+    """Flujo interactivo para eliminar un gasto existente del historial.
+
+    Lista los gastos numerados, solicita al usuario el número del gasto a eliminar
+    y pide confirmación antes de ejecutar el borrado.
+
+    Args:
+        data (list[dict]): Lista de gastos cargada previamente desde el historial.
+
+    Returns:
+        None
+    """
     if len(data) == 0:
         return print("No hay información para mostrar")
     else:
@@ -101,6 +153,17 @@ def show_menu_delete_expense(data):
 
 
 def show_menu_modify_expense(data):
+    """Flujo interactivo para modificar la categoría y/o el monto de un gasto existente.
+
+    Lista los gastos numerados, solicita el número del ítem a modificar, permite cambiar
+    uno o ambos campos, muestra un preview del cambio y pide confirmación antes de persistir.
+
+    Args:
+        data (list[dict]): Lista de gastos cargada previamente desde el historial.
+
+    Returns:
+        None
+    """
     if len(data) == 0:
         print("La lista esta vacia, es imposible modificar gasto")
     else:
@@ -161,6 +224,14 @@ def show_menu_modify_expense(data):
 
 
 def show_summary_cat(data):
+    """Imprime en consola el total gastado agrupado por categoría.
+
+    Args:
+        data (list[dict]): Lista de gastos con campos 'category' y 'value'.
+
+    Returns:
+        None
+    """
     summary = calculate_summary_by_category(data)
 
     if not summary:
@@ -171,6 +242,14 @@ def show_summary_cat(data):
 
 
 def show_week(data):
+    """Imprime en consola los gastos de los últimos 7 días, del más reciente al más antiguo.
+
+    Args:
+        data (list[dict]): Lista de gastos con campos 'date', 'category' y 'value'.
+
+    Returns:
+        None
+    """
     week = get_week_expenses(data)
 
     if not week:
@@ -183,6 +262,17 @@ def show_week(data):
 
 
 def show_filter_cat(data):
+    """Flujo interactivo para filtrar y mostrar gastos de una categoría específica.
+
+    Lista las categorías disponibles, solicita al usuario que elija una y muestra
+    todos los gastos que pertenecen a esa categoría.
+
+    Args:
+        data (list[dict]): Lista de gastos con campos 'date', 'category' y 'value'.
+
+    Returns:
+        None
+    """
     categories = get_unique_categories(data)
 
     for category in categories:
