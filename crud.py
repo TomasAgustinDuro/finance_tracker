@@ -1,3 +1,9 @@
+"""Capa de persistencia del historial de gastos.
+
+Responsable exclusivamente de leer y escribir sobre historial.json.
+Ninguna otra capa debe acceder al archivo directamente.
+"""
+
 import json
 import os.path
 import uuid
@@ -5,6 +11,14 @@ from datetime import datetime
 
 
 def read_history():
+    """Lee y retorna el historial de gastos desde historial.json.
+
+    Si el archivo no existe, lo crea vacío y retorna una lista vacía.
+    Si el contenido es inválido, retorna una lista vacía sin lanzar excepción.
+
+    Returns:
+        list[dict]: Lista de gastos. Cada gasto contiene 'id', 'category', 'value' y 'date'.
+    """
     if os.path.isfile("historial.json"):
         try:
             with open("historial.json", "r") as f:
@@ -24,6 +38,18 @@ def read_history():
 
 # AGREGAR GASTO
 def add_expense(category_expense_formatted, value_expense_formatted):
+    """Agrega un nuevo gasto al historial persistido en historial.json.
+
+    Genera automáticamente un id único (UUID hex) y la fecha/hora actual.
+    Lee el historial existente, agrega el nuevo ítem y sobreescribe el archivo.
+
+    Args:
+        category_expense_formatted (str): Categoría del gasto ya capitalizada y sin espacios sobrantes.
+        value_expense_formatted (int): Monto del gasto como entero positivo.
+
+    Returns:
+        bool: True si el gasto se guardó correctamente, False si hubo un error de I/O.
+    """
 
     expenses = read_history()
 
@@ -47,6 +73,15 @@ def add_expense(category_expense_formatted, value_expense_formatted):
 
 
 def delete_expense(indice, data):
+    """Elimina un gasto del historial por su índice y persiste el resultado.
+
+    Args:
+        indice (int): Índice (base 0) del gasto a eliminar dentro de la lista.
+        data (list[dict]): Lista completa de gastos cargada previamente.
+
+    Returns:
+        bool: True si se eliminó y guardó correctamente, False si hubo un error de I/O.
+    """
     try:
         del data[indice]
         with open("historial.json", "w", encoding="utf-8") as f:
@@ -58,6 +93,20 @@ def delete_expense(indice, data):
 
 
 def modify_expense(data, indice, new_category=None, new_value=None):
+    """Modifica la categoría y/o el monto de un gasto existente y persiste el cambio.
+
+    Solo actualiza los campos que reciben un valor distinto de None.
+    Si ambos parámetros son None, el gasto queda sin cambios pero igual se persiste.
+
+    Args:
+        data (list[dict]): Lista completa de gastos cargada previamente.
+        indice (int): Índice (base 0) del gasto a modificar.
+        new_category (str | None): Nueva categoría. Si es None, se mantiene la actual.
+        new_value (int | None): Nuevo monto. Si es None, se mantiene el actual.
+
+    Returns:
+        bool: True si se guardó correctamente, False si hubo un error de I/O.
+    """
     current_expense = data[indice]
 
     if new_category:

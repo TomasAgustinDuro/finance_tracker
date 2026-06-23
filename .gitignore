@@ -20,6 +20,8 @@ wheels/
 .installed.cfg
 *.egg
 
+.kiro/
+
 # Virtual Environment
 venv/
 ENV/

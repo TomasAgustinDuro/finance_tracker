@@ -1,5 +1,10 @@
 
 def show_menu():
+    """Muestra el menú principal de la aplicación y captura la opción del usuario.
+
+    Returns:
+        str: Opción seleccionada por el usuario como string (ej: '1', '2', ..., '12').
+    """
     menu_option = input("""
     =====================================
          GESTOR DE GASTOS 🧾

@@ -1,6 +1,21 @@
+"""Capa de lógica de negocio para análisis y cálculos sobre gastos.
+
+Todas las funciones son puras: reciben datos como parámetro y retornan
+resultados sin modificar estado global ni acceder a archivos.
+"""
+
 from datetime import datetime, timedelta
 
 def calculate_expense_percentage(data):
+    """Calcula el porcentaje que representa cada categoría sobre el total gastado.
+
+    Args:
+        data (list[dict]): Lista de gastos con campos 'category' y 'value'.
+
+    Returns:
+        dict[str, float]: Diccionario {categoria: porcentaje}. Los valores suman 100.
+            Retorna dict vacío si la lista está vacía.
+    """
     total_value = 0
 
     if len(data) == 0:
@@ -22,6 +37,15 @@ def calculate_expense_percentage(data):
     return percentages
 
 def get_week_expenses(data):
+    """Retorna los gastos registrados en los últimos 7 días, ordenados del más reciente al más antiguo.
+
+    Args:
+        data (list[dict]): Lista de gastos con campo 'date' en formato ISO 8601.
+
+    Returns:
+        list[dict]: Gastos dentro de la ventana de 7 días, ordenados por fecha descendente.
+            Retorna lista vacía si no hay gastos en ese período.
+    """
     if len(data) == 0:
         return {}
 
@@ -42,6 +66,17 @@ def get_week_expenses(data):
     return sorted_expenses
 
 def get_top_expense_day(data):
+    """Identifica el día con mayor gasto acumulado en todo el historial.
+
+    Agrupa los gastos por fecha (YYYY-MM-DD) y retorna el día cuya suma es mayor.
+
+    Args:
+        data (list[dict]): Lista de gastos con campos 'date' y 'value'.
+
+    Returns:
+        dict: Diccionario con claves 'date' (str, formato YYYY-MM-DD) y 'value' (int).
+            Retorna dict vacío si la lista está vacía.
+    """
     if not data:
         return {}
 
@@ -58,6 +93,15 @@ def get_top_expense_day(data):
     return {"date": max_date, "value": max_value}
 
 def calculate_summary_by_category(data):
+    """Calcula el total gastado agrupado por categoría.
+
+    Args:
+        data (list[dict]): Lista de gastos con campos 'category' y 'value'.
+
+    Returns:
+        dict[str, int]: Diccionario {categoria: total_gastado}.
+            Retorna dict vacío si la lista está vacía.
+    """
     if not data:
         return{}
 
@@ -69,6 +113,17 @@ def calculate_summary_by_category(data):
 
 # Helper
 def calculate_daily_average(data):
+    """Calcula el promedio diario de gasto para los últimos 7 días.
+
+    Suma todos los gastos de la última semana y divide por 7, independientemente
+    de cuántos días tuvieron actividad real.
+
+    Args:
+        data (list[dict]): Lista completa de gastos del historial.
+
+    Returns:
+        float: Promedio diario de los últimos 7 días. Retorna 0 si no hay gastos en ese período.
+    """
     last_week = get_week_expenses(data)
     total_week = 0
 
@@ -82,6 +137,17 @@ def calculate_daily_average(data):
 
 # Helper
 def calculate_historical_daily_average(data):
+    """Calcula el promedio diario de gasto a lo largo de todo el historial.
+
+    Divide el total gastado entre la cantidad de días únicos con al menos un gasto registrado,
+    ignorando los días sin actividad.
+
+    Args:
+        data (list[dict]): Lista completa de gastos del historial.
+
+    Returns:
+        float: Promedio de gasto por día activo. Retorna 0 si no hay datos.
+    """
     days_with_expense = []
     value_expense = 0
 
