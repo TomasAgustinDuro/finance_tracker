@@ -6,7 +6,7 @@ resultados sin modificar estado global ni acceder a archivos.
 
 from datetime import datetime, timedelta
 
-def calculate_expense_percentage(data):
+def calculate_expense_percentage(data: list) -> dict:
     """Calcula el porcentaje que representa cada categoría sobre el total gastado.
 
     Args:
@@ -18,16 +18,16 @@ def calculate_expense_percentage(data):
     """
     total_value = 0
 
-    if len(data) == 0:
+    if not data:
         return {}
 
     summary = {}
 
     for item in data:
-        cat = item["category"]
-        val = item["value"]
+        item_category = item["category"]
+        item_value = item["value"]
         total_value += item['value']
-        summary[cat] = summary.get(cat, 0) + val
+        summary[item_category] = summary.get(item_category, 0) + item_value
 
     percentages = {}
 
@@ -36,7 +36,7 @@ def calculate_expense_percentage(data):
 
     return percentages
 
-def get_week_expenses(data):
+def get_week_expenses(data: list) -> list:
     """Retorna los gastos registrados en los últimos 7 días, ordenados del más reciente al más antiguo.
 
     Args:
@@ -47,7 +47,7 @@ def get_week_expenses(data):
             Retorna lista vacía si no hay gastos en ese período.
     """
     if len(data) == 0:
-        return {}
+        return []
 
     today = datetime.now()
     week = today - timedelta(days=7)
@@ -65,7 +65,7 @@ def get_week_expenses(data):
 
     return sorted_expenses
 
-def get_top_expense_day(data):
+def get_top_expense_day(data: list) -> dict:
     """Identifica el día con mayor gasto acumulado en todo el historial.
 
     Agrupa los gastos por fecha (YYYY-MM-DD) y retorna el día cuya suma es mayor.
@@ -92,7 +92,7 @@ def get_top_expense_day(data):
 
     return {"date": max_date, "value": max_value}
 
-def calculate_summary_by_category(data):
+def calculate_summary_by_category(data: list) -> dict:
     """Calcula el total gastado agrupado por categoría.
 
     Args:
@@ -112,7 +112,7 @@ def calculate_summary_by_category(data):
     return summary
 
 # Helper
-def calculate_daily_average(data):
+def calculate_daily_average(data: list) -> float:
     """Calcula el promedio diario de gasto para los últimos 7 días.
 
     Suma todos los gastos de la última semana y divide por 7, independientemente
@@ -136,7 +136,7 @@ def calculate_daily_average(data):
     return total_week / 7
 
 # Helper
-def calculate_historical_daily_average(data):
+def calculate_historical_daily_average(data: list) -> float:
     """Calcula el promedio diario de gasto a lo largo de todo el historial.
 
     Divide el total gastado entre la cantidad de días únicos con al menos un gasto registrado,

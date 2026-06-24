@@ -1,232 +1,202 @@
-# 🧾 Gestor de Gastos Personales
+# Finance Tracker 🧾
 
-Aplicación de línea de comandos (CLI) para registrar, consultar y analizar gastos personales. Resuelve el problema de llevar un control ordenado del dinero gastado sin necesidad de planillas ni aplicaciones externas. Está dirigida a cualquier persona que quiera tener visibilidad sobre sus gastos desde la terminal, sin dependencias externas ni configuración compleja.
+Gestor de gastos personales por línea de comandos escrito en Python puro. Permite registrar, consultar, modificar, filtrar y exportar gastos de forma persistente sin necesidad de base de datos ni dependencias externas.
 
-Toda la información se persiste localmente en un archivo `historial.json` que se crea automáticamente al iniciar la aplicación por primera vez.
-
----
-
-## ✨ Características principales
-
-| Opción | Funcionalidad |
-|--------|---------------|
-| 1 | Agregar un nuevo gasto (categoría + monto) |
-| 2 | Ver resumen de gastos agrupados por categoría |
-| 3 | Ver historial completo en consola |
-| 4 | Exportar historial detallado a TXT (con fechas y montos) |
-| 5 | Exportar resumen general a TXT (totales por categoría) |
-| 6 | Borrar un gasto existente (con confirmación) |
-| 7 | Modificar categoría y/o monto de un gasto existente |
-| 8 | Filtrar y listar todos los gastos de una categoría |
-| 9 | Ver porcentaje que representa cada categoría sobre el total |
-| 10 | Ver gastos registrados en los últimos 7 días |
-| 11 | Ver el día con mayor gasto acumulado del historial |
-| 12 | Salir de la aplicación |
+Está pensado para quienes quieren un control simple de sus finanzas personales directamente desde la terminal, con datos almacenados localmente en un archivo JSON.
 
 ---
 
-## 🏗️ Arquitectura del proyecto
+## Características principales
 
-El proyecto aplica un patrón de **capas desacopladas** (Layered Architecture). Cada módulo tiene una única responsabilidad y las capas superiores nunca contienen lógica de negocio.
+- **Agregar gastos** — Registra un gasto con categoría, monto y fecha/hora automática.
+- **Ver historial completo** — Lista todos los gastos con fecha, categoría y monto.
+- **Resumen por categoría** — Muestra el total acumulado agrupado por categoría.
+- **Porcentaje por categoría** — Calcula qué porcentaje del total representa cada categoría.
+- **Gastos de los últimos 7 días** — Filtra y ordena los gastos de la última semana del más reciente al más antiguo.
+- **Día con mayor gasto** — Identifica el día del historial con mayor desembolso acumulado.
+- **Filtrar por categoría** — Muestra todos los gastos de una categoría elegida.
+- **Modificar un gasto** — Cambia la categoría y/o el monto de un gasto existente, con preview y confirmación antes de persistir.
+- **Borrar un gasto** — Elimina un gasto del historial con confirmación previa.
+- **Exportar resumen general a TXT** — Genera `resumen_general.txt` con el total por categoría y el gran total acumulado.
+- **Exportar historial detallado a TXT** — Genera `resumen_detallado.txt` con fecha, categoría y monto de cada gasto.
+
+---
+
+## Arquitectura del proyecto
 
 ```
 finance_tracker/
-│
-├── main.py              → Punto de entrada. Loop principal que lee el historial,
-│                          muestra el menú y delega cada opción a la vista correspondiente.
-│
-├── menu.py              → Capa de presentación del menú. Muestra las opciones al usuario
-│                          y retorna la opción seleccionada como string.
-│
-├── vistas.py            → Capa de presentación y coordinación de flujos de usuario.
-│                          Recibe datos ya procesados y los imprime en consola.
-│                          Gestiona los inputs interactivos de agregar, borrar y modificar.
-│
-├── crud.py              → Capa de persistencia. Única responsable de leer y escribir
-│                          historial.json. Expone: read_history, add_expense,
-│                          delete_expense, modify_expense.
-│
-├── analytics.py         → Capa de lógica de negocio. Cálculos y transformaciones puras
-│                          sobre los datos: porcentajes, resumen por categoría,
-│                          filtro semanal, día de mayor gasto, promedios.
-│
-├── filters.py           → Helpers de filtrado stateless: obtener categorías únicas
-│                          y filtrar gastos por categoría.
-│
-├── exports.py           → Capa de salida a archivos. Genera resumen_general.txt
-│                          y resumen_detalado.txt a partir de los datos del historial.
-│
-├── historial.json       → Base de datos local (JSON). Se crea automáticamente.
-│
-├── tests/
-│   ├── test_analytics.py
-│   ├── test_crud.py
-│   └── test_filters.py
-│
-├── resumen_general.txt  → Generado por la opción 5
-└── resumen_detalado.txt → Generado por la opción 4
+├── main.py           # Punto de entrada. Loop principal y enrutamiento de opciones.
+├── menu.py           # Presentación del menú y captura de input del usuario.
+├── vistas.py         # Capa de presentación: flujos interactivos y output en consola.
+├── crud.py           # Capa de persistencia: lectura y escritura sobre historial.json.
+├── analytics.py      # Capa de negocio: cálculos y análisis sobre los datos.
+├── filters.py        # Helpers de filtrado stateless sobre la lista de gastos.
+├── exports.py        # Capa de exportación: generación de reportes TXT.
+├── validator.py      # Validación y normalización de inputs del usuario.
+├── historial.json    # Base de datos local con el historial de gastos.
+└── tests/
+    ├── test_analytics.py
+    ├── test_crud.py
+    ├── test_exports.py
+    ├── test_filters.py
+    ├── test_validator.py
+    └── test_vistas.py
 ```
 
-### Flujo de datos
+### Patrón de capas
 
-```
-Usuario
-  └─→ menu.py     →  main.py (router por opción)
-                        ├─→ crud.py        (R/W sobre historial.json)
-                        ├─→ analytics.py   (cálculos sobre los datos)
-                        ├─→ filters.py     (filtros helpers)
-                        ├─→ exports.py     (escritura de archivos TXT)
-                        └─→ vistas.py      (presentación en consola + inputs)
-```
+El proyecto aplica **responsabilidad única por módulo**: cada capa tiene una sola razón para cambiar y no cruza sus fronteras.
 
-**Principio clave:** `vistas.py` nunca toca el archivo JSON directamente — llama a `crud.py` para escrituras. `analytics.py` y `filters.py` son funciones puras que reciben datos y devuelven resultados sin efectos secundarios.
+| Módulo | Responsabilidad |
+|---|---|
+| `main.py` | Punto de entrada. Lee el historial en cada iteración, muestra el menú y delega cada opción a la vista correspondiente. No contiene lógica de negocio. |
+| `menu.py` | Exclusivamente muestra el menú en consola y retorna la opción elegida como string. |
+| `vistas.py` | Capa de presentación. Gestiona los flujos interactivos (inputs, confirmaciones, output formateado). Delega toda persistencia a `crud.py` y todos los cálculos a `analytics.py`. |
+| `crud.py` | Única capa que accede a `historial.json`. Expone funciones para leer, agregar, modificar y eliminar gastos. |
+| `analytics.py` | Funciones puras de análisis: porcentajes, promedios, agrupaciones y filtros temporales. No accede a archivos ni modifica estado global. |
+| `filters.py` | Helpers stateless para obtener categorías únicas y filtrar la lista por categoría. |
+| `exports.py` | Genera archivos TXT de reporte. Delega los cálculos a `analytics.py` y no accede a `historial.json` directamente. |
+| `validator.py` | Valida y normaliza los inputs del usuario (categoría y monto) antes de que lleguen a la capa de persistencia. |
 
 ---
 
-## 📦 Modelo de datos
+## Modelo de datos
 
-Cada gasto se almacena como un objeto dentro del array en `historial.json`:
+Los gastos se persisten en `historial.json` como un array de objetos JSON:
 
 ```json
 [
   {
-    "id": "a3f2c1d4e5b67890abcdef1234567890",
+    "id": "a3f1c2d4e5b67890abcdef1234567890",
     "category": "Comida",
-    "value": 500,
-    "date": "2026-06-23T14:30:00.123456"
+    "value": 850,
+    "date": "2026-06-15T14:32:10.123456"
   }
 ]
 ```
 
 | Campo | Tipo | Descripción |
-|-------|------|-------------|
-| `id` | `string` | Identificador único generado con `uuid.uuid4().hex`. 32 caracteres hexadecimales. |
-| `category` | `string` | Categoría del gasto. Se almacena capitalizada y sin espacios sobrantes. Solo letras. |
-| `value` | `int` | Monto del gasto. Se valida como entero positivo al momento de la carga. |
-| `date` | `string` | Fecha y hora de registro en formato ISO 8601, generada con `datetime.now().isoformat()`. |
+|---|---|---|
+| `id` | `string` | Identificador único generado con `uuid4().hex`. Garantiza que cada gasto sea distinguible incluso con los mismos datos. |
+| `category` | `string` | Categoría del gasto, capitalizada y sin espacios sobrantes (ej: `"Transporte"`, `"Comida"`). |
+| `value` | `integer` | Monto del gasto como entero positivo. No se admiten decimales ni valores negativos. |
+| `date` | `string` | Fecha y hora de registro en formato ISO 8601 (`YYYY-MM-DDTHH:MM:SS.ffffff`), generada automáticamente al momento de agregar el gasto. |
 
 ---
 
-## ⚙️ Instalación y requisitos
+## Instalación y requisitos
 
-**Requisitos del sistema:**
-- Python **3.8** o superior
-- No requiere dependencias externas — utiliza únicamente la biblioteca estándar de Python (`json`, `os`, `uuid`, `datetime`)
-
-**Pasos de instalación:**
+**Requisitos:**
+- Python 3.10 o superior (se utiliza la sintaxis `str | None` de union types, disponible desde 3.10).
+- No requiere dependencias externas. Todo el proyecto usa la biblioteca estándar de Python.
+- Para correr los tests se necesita `pytest`:
 
 ```bash
-# 1. Clonar el repositorio
-git clone <url-del-repositorio>
-cd finance_tracker
-
-# 2. (Recomendado) Crear y activar un entorno virtual
-python -m venv venv
-
-# Windows
-venv\Scripts\activate
-
-# Linux / macOS
-source venv/bin/activate
-
-# 3. No hay dependencias que instalar
-# El proyecto funciona con la stdlib de Python directamente
+pip install pytest
 ```
 
-> Para correr los tests necesitás `pytest`. Instalarlo con:
-> ```bash
-> pip install pytest
-> ```
+**Instalación:**
+
+```bash
+git clone https://github.com/tu-usuario/finance_tracker.git
+cd finance_tracker
+```
 
 ---
 
-## ▶️ Cómo ejecutar
+## Cómo ejecutar
+
+Desde la raíz del proyecto:
 
 ```bash
 python main.py
 ```
 
-Al iniciarse, si `historial.json` no existe en el directorio actual, se crea automáticamente con un array vacío. El menú interactivo aparece de inmediato en la consola.
+Se abrirá el menú interactivo en la terminal. Ingresá el número de la opción deseada y presioná Enter.
 
-> **Importante:** el archivo `historial.json` se crea en el directorio desde donde se corre el comando, no necesariamente en la raíz del proyecto. Se recomienda siempre ejecutar desde la raíz del repositorio.
+```
+=====================================
+     GESTOR DE GASTOS 🧾
+=====================================
+
+Elija una opción:
+
+1) Agregar un nuevo gasto
+2) Ver resumen por categoría
+3) Ver historial completo en consola
+...
+12) Salir
+```
 
 ---
 
-## 🧪 Tests
+## Tests
 
-Los tests están escritos con `unittest` y son compatibles con `pytest` como runner.
+Los tests están escritos con `unittest` y son compatibles con `pytest`. Para ejecutarlos desde la raíz del proyecto:
 
 ```bash
-# Desde la raíz del proyecto
+# Correr todos los tests
 pytest tests/
 
-# Con salida detallada
+# Con output detallado
 pytest tests/ -v
 ```
 
-### Cobertura actual
+> **Nota:** los tests de `test_crud.py` y `test_exports.py` leen y escriben archivos en el directorio desde donde se ejecuta `pytest`. Correrlos desde la raíz garantiza que encuentren `historial.json` correctamente.
 
-| Archivo de test | Módulo testeado | Casos cubiertos |
-|-----------------|----------------|-----------------|
-| `test_crud.py` | `crud.py` | Agregar gasto, eliminar gasto, modificar categoría, modificar monto, modificar ambos campos simultáneamente |
-| `test_analytics.py` | `analytics.py` | Cálculo de porcentaje por categoría, filtro de gastos semanales, día con mayor gasto, resumen por categoría, promedio diario de la semana, promedio histórico por días únicos |
-| `test_filters.py` | `filters.py` | Obtener categorías únicas, filtrar gastos por categoría exacta |
+### Cobertura por archivo
 
-**Nota sobre aislamiento:** `test_crud.py` limpia `historial.json` antes de cada test mediante `setUp`, garantizando que los casos no se interfieran entre sí.
-
-**Nota sobre fechas en tests:** `test_analytics.py` usa fechas fijas (febrero 2026). El test `test_get_week_expenses` puede devolver una lista vacía si se corre hoy, ya que esas fechas caen fuera de la ventana de 7 días. El resto de los tests no dependen de la fecha actual.
-
----
-
-## 📄 Archivos generados
-
-La aplicación puede generar dos archivos de texto en el directorio de ejecución:
-
-### `resumen_general.txt` — Opción 5
-
-Contiene el total gastado por categoría y el gran total acumulado.
-
-```
-Comida : 1200
-
-Transporte : 450
-
-Total Gastado 1650
-```
-
-### `resumen_detalado.txt` — Opción 4
-
-Contiene cada gasto individual con su fecha completa en formato ISO, categoría y monto.
-
-```
-2026-06-20T10:00:00.000000 | Comida : 500
-
-2026-06-21T15:30:00.000000 | Transporte : 300
-```
-
-> El nombre `resumen_detalado.txt` (con una sola `l`) corresponde al nombre definido en `exports.py`. Si se corrige el typo en el código, el archivo generado cambiará de nombre.
+| Archivo | Módulo bajo prueba | Qué cubre |
+|---|---|---|
+| `test_analytics.py` | `analytics.py` | Happy path y casos borde de las seis funciones públicas: porcentajes, gastos semanales, día con mayor gasto, resumen por categoría, promedio diario e histórico. Los tests que dependen de la ventana temporal usan `datetime.now() - timedelta(...)` para no fallar con el paso del tiempo. |
+| `test_crud.py` | `crud.py` | Agregar, leer, modificar y borrar gastos. Verifica generación de IDs únicos, manejo de JSON corrupto, creación automática del archivo si no existe, y que el borrado no afecte ítems adyacentes. |
+| `test_exports.py` | `exports.py` | Creación de archivos, contenido correcto de categorías y totales, grand total acumulado, y comportamiento con data vacía para ambas funciones de exportación. Limpia los archivos generados después de cada test con `tearDown`. |
+| `test_filters.py` | `filters.py` | Obtención de categorías únicas y filtrado por categoría. |
+| `test_validator.py` | `validator.py` | `validate_category`: capitalización, strip de espacios, rechazo de strings vacíos, solo espacios, con dígitos y caracteres especiales. `validate_mount`: retorno como entero, rechazo de cero, string vacío, floats, negativos y texto. |
+| `test_vistas.py` | `vistas.py` | `process_expense_modification`: índice fuera de rango, no numérico, cero, modificación con confirmación Y/N, campos vacíos. Funciones de display (`show_history`, `show_top_expenses`, `show_summary_cat`, `show_percentage`) verificadas con mocks de `print()` e `input()`. |
 
 ---
 
-## 🤝 Contribuir
+## Archivos generados
 
-1. Hacé un fork del repositorio
-2. Creá una rama descriptiva:
+Al usar las opciones de exportación, el proyecto genera los siguientes archivos en el directorio raíz:
+
+### `resumen_general.txt`
+
+Reporte agregado con el total gastado por categoría y el gran total acumulado al final.
+
+```
+Comida : 700
+
+Transporte : 300
+
+Total Gastado 1000
+```
+
+### `resumen_detallado.txt`
+
+Reporte línea por línea con la fecha completa ISO 8601, categoría y monto de cada gasto registrado.
+
+```
+2026-06-20T10:00:00 | Comida : 500
+
+2026-06-21T15:30:00 | Transporte : 300
+
+2026-06-22T18:45:00 | Comida : 200
+```
+
+Ambos archivos se sobreescriben completamente cada vez que se ejecuta la exportación correspondiente.
+
+---
+
+## Contribuir
+
+1. Hacé un fork del repositorio y creá una rama descriptiva:
    ```bash
-   git checkout -b feature/nombre-de-la-funcionalidad
+   git checkout -b feature/nombre-de-la-feature
    ```
-3. Seguí las convenciones del proyecto:
-   - `snake_case` para variables y funciones en Python
-   - Type hints en todos los argumentos y retornos
-   - Funciones de no más de 20 líneas
-   - Guard clauses para validar inputs antes de la lógica principal
-4. Agregá tests unitarios para cualquier función de lógica nueva en `tests/`
-5. Verificá que los tests existentes siguen pasando:
-   ```bash
-   pytest tests/ -v
-   ```
-6. Abrí un Pull Request con una descripción clara del cambio y qué problema resuelve
-
----
-
-*Desarrollado en Python puro · Sin dependencias externas · Persistencia local en JSON*
+2. Seguí las convenciones del proyecto: `snake_case` en Python, type hints en todas las funciones y retornos, docstrings estilo Google.
+3. Mantené las funciones por debajo de 20 líneas. Si una función crece más, es señal de que tiene más de una responsabilidad.
+4. Toda función nueva de lógica de negocio debe venir acompañada de sus tests en `tests/`, cubriendo el happy path y los casos borde principales (lista vacía, valores inválidos, etc.).
+5. Abrí un Pull Request con una descripción clara de qué cambia y por qué.

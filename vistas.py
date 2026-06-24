@@ -16,8 +16,10 @@ from crud import add_expense, delete_expense, modify_expense
 
 from filters import get_unique_categories, filter_by_category
 
+from validator import validate_category, validate_mount
 
-def show_history(data):
+
+def show_history(data: list) -> None:
     """Imprime en consola el historial completo de gastos.
 
     Formato de cada línea: 'YYYY-MM-DD - CATEGORIA: $MONTO'
@@ -32,7 +34,7 @@ def show_history(data):
         print(f"{expense['date'][:10]} - {expense['category']}: ${expense['value']}")
 
 
-def show_percentage(data):
+def show_percentage(data: list) -> None:
     """Imprime en consola el porcentaje que representa cada categoría sobre el total gastado.
 
     Args:
@@ -51,7 +53,7 @@ def show_percentage(data):
             f"{category} representa un {value:.1f}% de los expenses totales registrados"
         )
 
-def show_top_expenses(data):
+def show_top_expenses(data: list) -> None:
     """Imprime en consola el día con mayor gasto acumulado del historial.
 
     Args:
@@ -64,13 +66,14 @@ def show_top_expenses(data):
 
     if not values:
         print("No hay información para mostrar")
+        return
 
     print(
         f"El dia con mayor expenses es {values['date']} con un total de ${values['value']}"
     )
 
 
-def show_menu_add_expenses():
+def show_menu_add_expenses() -> None:
     """Flujo interactivo para agregar uno o más gastos nuevos.
 
     Solicita al usuario categoría y monto, valida ambos campos y llama a add_expense.
@@ -86,19 +89,8 @@ def show_menu_add_expenses():
         value_expense = input("Ingrese el value del gasto: ")
         category_expense_formatted = category_expense.capitalize().strip()
 
-        if (
-            category_expense_formatted == ""
-            or not category_expense_formatted.replace(" ", "").isalpha()
-        ):
-            print("category tiene que tener un value y no puede contener numeros")
-            continue
-        if value_expense == "" or not value_expense.isdigit():
-            print(
-                "value del gasto tiene que tener contenido y no puede contener letras"
-            )
-            continue
-
-        value_expense_formatted = int(value_expense)
+        category_expense_formatted = validate_category(category_expense)
+        value_expense_formatted = validate_mount(value_expense)
 
         cargado = add_expense(category_expense_formatted, value_expense_formatted)
 
@@ -110,7 +102,7 @@ def show_menu_add_expenses():
         start = input("Ingrese Q para salir o ENTER para continuar: ")
 
 
-def show_menu_delete_expense(data):
+def show_menu_delete_expense(data: list) -> None:
     """Flujo interactivo para eliminar un gasto existente del historial.
 
     Lista los gastos numerados, solicita al usuario el número del gasto a eliminar
@@ -151,8 +143,49 @@ def show_menu_delete_expense(data):
     else:
         print("El valor ingresado, debe ser un numero")
 
+def process_expense_modification(gastos: list, indice: str) -> None:
+     if indice.isdigit() and 1 <= int(indice) <= len(gastos):
+            indice = int(indice) - 1
+            
+            print(f"Gasto actual: {gastos[indice]['category']}: ${gastos[indice]['value']}")
 
-def show_menu_modify_expense(data):
+            category = input(
+                "Ingrese una nueva categoria (ENTER para mantener la category actual: "
+            )
+           
+            value = input(
+                "Ingrese un nuevo value (ENTER para mantener el value actual: "
+            )
+
+            new_cat = validate_category(category)
+
+            new_val = validate_mount(value)
+
+            if not new_cat and not new_val:
+                print("No hubo cambios validos")
+                return
+
+            preview_cat = new_cat if new_cat else gastos[indice]["category"]
+            preview_value = new_val if new_val else gastos[indice]["value"]
+
+            print(
+                f"\nCambio: [{gastos[indice]['category']}: ${gastos[indice]['value']}] → [{preview_cat}: ${preview_value}]"
+            )
+
+            confirmation = input("¿Confirmar cambio? [Y/N]: ")
+
+            if confirmation.upper() == "Y":
+                success = modify_expense(gastos, indice, new_cat, new_val)
+
+                if success:
+                    print("Cambio realizado satisfactoriamente")
+                else:
+                    print("Error al hacer el cambio")
+            else:
+                return
+
+
+def show_menu_modify_expense(data: list) -> None:
     """Flujo interactivo para modificar la categoría y/o el monto de un gasto existente.
 
     Lista los gastos numerados, solicita el número del ítem a modificar, permite cambiar
@@ -167,63 +200,22 @@ def show_menu_modify_expense(data):
     if len(data) == 0:
         print("La lista esta vacia, es imposible modificar gasto")
     else:
+        #Muestra los gastos
         for i, expense in enumerate(data, start=1):
             print(
                 f"{i}. {expense['category']}: ${expense['value']} - {expense['date'][:10]}"
             )
 
+        #Pide indicar el gasto a modificar
         index_selection = input("Ingrese el numero del gasto que desea modificar: ")
 
-        if index_selection.isdigit() and 1 <= int(index_selection) <= len(data):
-            indice = int(index_selection) - 1
+        #Valida la integridad del index-selection   
+        process_expense_modification(data, index_selection)
 
-            print(f"Gasto actual: {data[indice]['category']}: ${data[indice]['value']}")
-
-            category = input(
-                "Ingrese una nueva categoria (ENTER para mantener la category actual: "
-            )
-            formatted_category = category.capitalize().strip()
-            value = input(
-                "Ingrese un nuevo value (ENTER para mantener el value actual: "
-            )
-
-            new_cat = (
-                formatted_category
-                if (
-                    formatted_category.replace(" ", "").isalpha()
-                    and formatted_category != ""
-                )
-                else None
-            )
-
-            new_val = int(value) if value.isdigit() and value != "" else None
-
-            if not new_cat and not new_val:
-                print("No hubo cambios validos")
-                return
-
-            preview_cat = new_cat if new_cat else data[indice]["category"]
-            preview_value = new_val if new_val else data[indice]["value"]
-
-            print(
-                f"\nCambio: [{data[indice]['category']}: ${data[indice]['value']}] → [{preview_cat}: ${preview_value}]"
-            )
-
-            confirmation = input("¿Confirmar cambio? [Y/N]: ")
-
-            if confirmation.upper() == "Y":
-                success = modify_expense(data, indice, new_cat, new_val)
-
-                if success:
-                    print("Cambio realizado satisfactoriamente")
-                else:
-                    print("Error al hacer el cambio")
-
-        else:
-            print("Debe ingresar un valor númerico")
+        
 
 
-def show_summary_cat(data):
+def show_summary_cat(data: list) -> None:
     """Imprime en consola el total gastado agrupado por categoría.
 
     Args:
@@ -241,7 +233,7 @@ def show_summary_cat(data):
         print(f"{category}: {value}")
 
 
-def show_week(data):
+def show_week(data: list) -> None:
     """Imprime en consola los gastos de los últimos 7 días, del más reciente al más antiguo.
 
     Args:
@@ -261,7 +253,7 @@ def show_week(data):
             )
 
 
-def show_filter_cat(data):
+def show_filter_cat(data: list) -> None:
     """Flujo interactivo para filtrar y mostrar gastos de una categoría específica.
 
     Lista las categorías disponibles, solicita al usuario que elija una y muestra
@@ -280,11 +272,7 @@ def show_filter_cat(data):
 
     category = input("Ingrese la category para filtrar: ")
 
-    if category.strip() == "":
-        print("Campo category vacio")
-        return
-
-    formatted_category = category.capitalize().strip()
+    formatted_category = validate_category(category)
 
     result = filter_by_category(data, formatted_category)
 

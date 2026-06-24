@@ -6,8 +6,11 @@ No contiene lógica de negocio propia — delega cálculos a analytics.py.
 
 from analytics import calculate_summary_by_category
 
+GENERAL_REPORT_FILE = "resumen_general.txt"
+DETAILED_REPORT_FILE = "resumen_detallado.txt"
 
-def export_general_report(data):
+
+def export_general_report(data: list) -> None:
     """Exporta un resumen de gastos totales por categoría a resumen_general.txt.
 
     Genera o sobreescribe el archivo con el total por categoría y el gran total acumulado.
@@ -24,10 +27,11 @@ def export_general_report(data):
 
     if not summary:
         print('No hay información para escribir')
+        return
 
     total_value = 0
 
-    with open("resumen_general.txt", "w") as f:
+    with open(GENERAL_REPORT_FILE, "w") as f:
         for category, value in summary.items():
             normalized_category = category.strip()
             total_value += value
@@ -35,7 +39,7 @@ def export_general_report(data):
         f.write(f"\nTotal Gastado {total_value}")
 
 
-def export_detailed_report(data):
+def export_detailed_report(data: list) -> None:
     """Exporta el historial completo de gastos con fecha a resumen_detalado.txt.
 
     Genera o sobreescribe el archivo con una línea por gasto en formato:
@@ -47,7 +51,7 @@ def export_detailed_report(data):
     Returns:
         None
     """
-    with open("resumen_detalado.txt", "w") as f:
+    with open(DETAILED_REPORT_FILE, "w") as f:
         for item in data:
             category = item["category"]
             value = item["value"]
