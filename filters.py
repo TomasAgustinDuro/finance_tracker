@@ -4,7 +4,7 @@ Funciones puras stateless: no modifican los datos de entrada ni acceden a archiv
 """
 
 # Helper
-def get_unique_categories(data):
+def get_unique_categories(data: list) -> set:
     """Retorna el conjunto de categorías únicas presentes en el historial.
 
     Args:
@@ -19,7 +19,7 @@ def get_unique_categories(data):
         return set(expense["category"] for expense in data)
 
 # Helper
-def filter_by_category(data, category):
+def filter_by_category(data: list, category: str) -> list:
     """Filtra y retorna solo los gastos que pertenecen a una categoría específica.
 
     La comparación es sensible a mayúsculas. Se espera que 'category' esté

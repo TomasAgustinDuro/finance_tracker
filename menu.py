@@ -1,5 +1,5 @@
 
-def show_menu():
+def show_menu() -> str:
     """Muestra el menú principal de la aplicación y captura la opción del usuario.
 
     Returns:

@@ -9,8 +9,10 @@ import os.path
 import uuid
 from datetime import datetime
 
+HISTORY_FILE = "historial.json"
 
-def read_history():
+
+def read_history() -> list:
     """Lee y retorna el historial de gastos desde historial.json.
 
     Si el archivo no existe, lo crea vacío y retorna una lista vacía.
@@ -19,9 +21,9 @@ def read_history():
     Returns:
         list[dict]: Lista de gastos. Cada gasto contiene 'id', 'category', 'value' y 'date'.
     """
-    if os.path.isfile("historial.json"):
+    if os.path.isfile(HISTORY_FILE):
         try:
-            with open("historial.json", "r") as f:
+            with open(HISTORY_FILE, "r") as f:
                 data = json.load(f)
 
                 for expense in data:
@@ -30,15 +32,15 @@ def read_history():
         except (json.JSONDecodeError, ValueError):
             return []
     else:
-        with open("historial.json", "w", encoding="utf-8") as f:
+        with open(HISTORY_FILE, "w", encoding="utf-8") as f:
             json.dump([], f, indent=4, ensure_ascii=False)
 
         return []
 
 
 # AGREGAR GASTO
-def add_expense(category_expense_formatted, value_expense_formatted):
-    """Agrega un nuevo gasto al historial persistido en historial.json.
+def add_expense(category_expense_formatted: str, value_expense_formatted: int) -> bool:
+    """Agrega un nuevo gasto al historial persistido en HISTORY_FILE.
 
     Genera automáticamente un id único (UUID hex) y la fecha/hora actual.
     Lee el historial existente, agrega el nuevo ítem y sobreescribe el archivo.
@@ -63,7 +65,7 @@ def add_expense(category_expense_formatted, value_expense_formatted):
     try:
         expenses.append(new_expense)
 
-        with open("historial.json", "w", encoding="utf-8") as f:
+        with open(HISTORY_FILE, "w", encoding="utf-8") as f:
             json.dump(expenses, f, indent=4, ensure_ascii=False)
 
         return True
@@ -72,7 +74,7 @@ def add_expense(category_expense_formatted, value_expense_formatted):
         return False
 
 
-def delete_expense(indice, data):
+def delete_expense(indice: int, data: list) -> bool:
     """Elimina un gasto del historial por su índice y persiste el resultado.
 
     Args:
@@ -84,7 +86,7 @@ def delete_expense(indice, data):
     """
     try:
         del data[indice]
-        with open("historial.json", "w", encoding="utf-8") as f:
+        with open(HISTORY_FILE, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=4, ensure_ascii=False)
 
         return True
@@ -92,7 +94,7 @@ def delete_expense(indice, data):
         return False
 
 
-def modify_expense(data, indice, new_category=None, new_value=None):
+def modify_expense(data: list, indice: int, new_category: str | None = None, new_value: int | None = None) -> bool:
     """Modifica la categoría y/o el monto de un gasto existente y persiste el cambio.
 
     Solo actualiza los campos que reciben un valor distinto de None.
@@ -116,7 +118,7 @@ def modify_expense(data, indice, new_category=None, new_value=None):
         current_expense["value"] = new_value
 
     try:
-        with open("historial.json", "w", encoding="utf-8") as f:
+        with open(HISTORY_FILE, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=4, ensure_ascii=False)
         return True
     except (IOError, PermissionError) :
