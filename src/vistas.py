@@ -5,18 +5,21 @@ los inputs interactivos para agregar, borrar y modificar gastos.
 No accede a archivos directamente — delega toda persistencia a crud.py.
 """
 
-from analytics import (
+from src.analytics import (
     calculate_expense_percentage,
     get_top_expense_day,
     calculate_summary_by_category,
     get_week_expenses,
 )
+from datetime import datetime
 
-from crud import add_expense, delete_expense, modify_expense
+from src.crud import add_expense, delete_expense, modify_expense
 
-from filters import get_unique_categories, filter_by_category
+from src.filters import get_unique_categories, filter_by_category
 
-from validator import validate_category, validate_mount
+from src.validator import validate_category, validate_mount
+
+import streamlit as st
 
 
 def show_history(data: list) -> None:
@@ -30,8 +33,20 @@ def show_history(data: list) -> None:
     Returns:
         None
     """
-    for expense in data:
-        print(f"{expense['date'][:10]} - {expense['category']}: ${expense['value']}")
+    if not data:
+        st.warning("No hay datos para mostrar")
+
+    data_mapeada = [
+        {'date': datetime.fromisoformat(gasto['date']).strftime('%d/%m/%Y'),
+        'category':gasto['category'].capitalize(),
+        'value': gasto['value']
+        }
+        for gasto in data
+        if 'category' in gasto
+    ]
+    
+
+    st.dataframe(data_mapeada)
 
 
 def show_percentage(data: list) -> None:
@@ -52,6 +67,7 @@ def show_percentage(data: list) -> None:
         print(
             f"{category} representa un {value:.1f}% de los expenses totales registrados"
         )
+
 
 def show_top_expenses(data: list) -> None:
     """Imprime en consola el día con mayor gasto acumulado del historial.
@@ -82,24 +98,27 @@ def show_menu_add_expenses() -> None:
     Returns:
         None
     """
-    start = ""
 
-    while start.lower() != "q":
-        category_expense = input("Ingrese la categoría de su gasto: ")
-        value_expense = input("Ingrese el value del gasto: ")
-        category_expense_formatted = category_expense.capitalize().strip()
+    with st.form("Carga de gasto", clear_on_submit=True):
+        category_expense = st.text_input("Categoria")
+        value_expense = st.number_input("Valor ($): ", min_value=0, format="%.2f")
 
+        boton_guardar = st.form_submit_button("Guardar gasto")
+
+    category_expense_formatted = category_expense.capitalize().strip()
+
+    if boton_guardar:
         category_expense_formatted = validate_category(category_expense)
         value_expense_formatted = validate_mount(value_expense)
 
         cargado = add_expense(category_expense_formatted, value_expense_formatted)
 
         if cargado:
-            print("Gasto cargado correctamente")
+            st.success(
+                f"¡Éxito! Se registraron ${value_expense_formatted:.2f} en la categoría '{category_expense}'."
+            )
         else:
-            print("Hubo un error al cargar su gasto")
-
-        start = input("Ingrese Q para salir o ENTER para continuar: ")
+            st.warning("Por favor, ingresa un monto o categoria valida")
 
 
 def show_menu_delete_expense(data: list) -> None:
@@ -143,46 +162,45 @@ def show_menu_delete_expense(data: list) -> None:
     else:
         print("El valor ingresado, debe ser un numero")
 
+
 def process_expense_modification(gastos: list, indice: str) -> None:
-     if indice.isdigit() and 1 <= int(indice) <= len(gastos):
-            indice = int(indice) - 1
-            
-            print(f"Gasto actual: {gastos[indice]['category']}: ${gastos[indice]['value']}")
+    if indice.isdigit() and 1 <= int(indice) <= len(gastos):
+        indice = int(indice) - 1
 
-            category = input(
-                "Ingrese una nueva categoria (ENTER para mantener la category actual: "
-            )
-           
-            value = input(
-                "Ingrese un nuevo value (ENTER para mantener el value actual: "
-            )
+        print(f"Gasto actual: {gastos[indice]['category']}: ${gastos[indice]['value']}")
 
-            new_cat = validate_category(category)
+        category = input(
+            "Ingrese una nueva categoria (ENTER para mantener la category actual: "
+        )
 
-            new_val = validate_mount(value)
+        value = input("Ingrese un nuevo value (ENTER para mantener el value actual: ")
 
-            if not new_cat and not new_val:
-                print("No hubo cambios validos")
-                return
+        new_cat = validate_category(category)
 
-            preview_cat = new_cat if new_cat else gastos[indice]["category"]
-            preview_value = new_val if new_val else gastos[indice]["value"]
+        new_val = validate_mount(value)
 
-            print(
-                f"\nCambio: [{gastos[indice]['category']}: ${gastos[indice]['value']}] → [{preview_cat}: ${preview_value}]"
-            )
+        if not new_cat and not new_val:
+            print("No hubo cambios validos")
+            return
 
-            confirmation = input("¿Confirmar cambio? [Y/N]: ")
+        preview_cat = new_cat if new_cat else gastos[indice]["category"]
+        preview_value = new_val if new_val else gastos[indice]["value"]
 
-            if confirmation.upper() == "Y":
-                success = modify_expense(gastos, indice, new_cat, new_val)
+        print(
+            f"\nCambio: [{gastos[indice]['category']}: ${gastos[indice]['value']}] → [{preview_cat}: ${preview_value}]"
+        )
 
-                if success:
-                    print("Cambio realizado satisfactoriamente")
-                else:
-                    print("Error al hacer el cambio")
+        confirmation = input("¿Confirmar cambio? [Y/N]: ")
+
+        if confirmation.upper() == "Y":
+            success = modify_expense(gastos, indice, new_cat, new_val)
+
+            if success:
+                print("Cambio realizado satisfactoriamente")
             else:
-                return
+                print("Error al hacer el cambio")
+        else:
+            return
 
 
 def show_menu_modify_expense(data: list) -> None:
@@ -200,19 +218,17 @@ def show_menu_modify_expense(data: list) -> None:
     if len(data) == 0:
         print("La lista esta vacia, es imposible modificar gasto")
     else:
-        #Muestra los gastos
+        # Muestra los gastos
         for i, expense in enumerate(data, start=1):
             print(
                 f"{i}. {expense['category']}: ${expense['value']} - {expense['date'][:10]}"
             )
 
-        #Pide indicar el gasto a modificar
+        # Pide indicar el gasto a modificar
         index_selection = input("Ingrese el numero del gasto que desea modificar: ")
 
-        #Valida la integridad del index-selection   
+        # Valida la integridad del index-selection
         process_expense_modification(data, index_selection)
-
-        
 
 
 def show_summary_cat(data: list) -> None:
@@ -227,10 +243,10 @@ def show_summary_cat(data: list) -> None:
     summary = calculate_summary_by_category(data)
 
     if not summary:
-        print("No hay información para mostrar")
+        st.warning("No hay información para mostrar")
+        return
 
-    for category, value in summary.items():
-        print(f"{category}: {value}")
+    return summary
 
 
 def show_week(data: list) -> None:

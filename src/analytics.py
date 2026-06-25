@@ -46,7 +46,7 @@ def get_week_expenses(data: list) -> list:
         list[dict]: Gastos dentro de la ventana de 7 días, ordenados por fecha descendente.
             Retorna lista vacía si no hay gastos en ese período.
     """
-    if len(data) == 0:
+    if not data:
         return []
 
     today = datetime.now()
@@ -58,7 +58,7 @@ def get_week_expenses(data: list) -> list:
         if week <= datetime.fromisoformat(last["date"]) <= today
     ]
 
-    if len(last_expenses) == 0:
+    if not last_expenses == 0:
         print("No hubo gastos los ultimos 7 dias")
 
     sorted_expenses = sorted(last_expenses, key=lambda item: item["date"], reverse=True)
