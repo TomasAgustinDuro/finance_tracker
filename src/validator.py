@@ -25,6 +25,6 @@ def validate_mount(mount: str) -> int | None:
     Returns:
         int | None: Monto como entero si es válido, None si es inválido, vacío o cero.
     """
-    if mount.isdigit() and int(mount) > 0:
-        return int(mount)
+    if mount and mount > 0:
+        return mount
     return None

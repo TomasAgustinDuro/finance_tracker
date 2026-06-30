@@ -46,7 +46,7 @@ def get_week_expenses(data: list) -> list:
         list[dict]: Gastos dentro de la ventana de 7 días, ordenados por fecha descendente.
             Retorna lista vacía si no hay gastos en ese período.
     """
-    if len(data) == 0:
+    if not data:
         return []
 
     today = datetime.now()
@@ -58,10 +58,10 @@ def get_week_expenses(data: list) -> list:
         if week <= datetime.fromisoformat(last["date"]) <= today
     ]
 
-    if len(last_expenses) == 0:
-        print("No hubo gastos los ultimos 7 dias")
+    if not last_expenses:
+        return[]
 
-    sorted_expenses = sorted(last_expenses, key=lambda item: item["date"], reverse=True)
+    sorted_expenses = sorted(last_expenses, key=lambda item: item["date"])
 
     return sorted_expenses
 
@@ -111,57 +111,57 @@ def calculate_summary_by_category(data: list) -> dict:
 
     return summary
 
-# Helper
-def calculate_daily_average(data: list) -> float:
-    """Calcula el promedio diario de gasto para los últimos 7 días.
+# # Helper
+# def calculate_daily_average(data: list) -> float:
+#     """Calcula el promedio diario de gasto para los últimos 7 días.
 
-    Suma todos los gastos de la última semana y divide por 7, independientemente
-    de cuántos días tuvieron actividad real.
+#     Suma todos los gastos de la última semana y divide por 7, independientemente
+#     de cuántos días tuvieron actividad real.
 
-    Args:
-        data (list[dict]): Lista completa de gastos del historial.
+#     Args:
+#         data (list[dict]): Lista completa de gastos del historial.
 
-    Returns:
-        float: Promedio diario de los últimos 7 días. Retorna 0 si no hay gastos en ese período.
-    """
-    last_week = get_week_expenses(data)
-    total_week = 0
+#     Returns:
+#         float: Promedio diario de los últimos 7 días. Retorna 0 si no hay gastos en ese período.
+#     """
+#     last_week = get_week_expenses(data)
+#     total_week = 0
 
-    if not last_week:
-        return 0
+#     if not last_week:
+#         return 0
 
-    for expense_value in last_week:
-        total_week += expense_value["value"]
+#     for expense_value in last_week:
+#         total_week += expense_value["value"]
 
-    return total_week / 7
+#     return total_week / 7
 
-# Helper
-def calculate_historical_daily_average(data: list) -> float:
-    """Calcula el promedio diario de gasto a lo largo de todo el historial.
+# # Helper
+# def calculate_historical_daily_average(data: list) -> float:
+#     """Calcula el promedio diario de gasto a lo largo de todo el historial.
 
-    Divide el total gastado entre la cantidad de días únicos con al menos un gasto registrado,
-    ignorando los días sin actividad.
+#     Divide el total gastado entre la cantidad de días únicos con al menos un gasto registrado,
+#     ignorando los días sin actividad.
 
-    Args:
-        data (list[dict]): Lista completa de gastos del historial.
+#     Args:
+#         data (list[dict]): Lista completa de gastos del historial.
 
-    Returns:
-        float: Promedio de gasto por día activo. Retorna 0 si no hay datos.
-    """
-    days_with_expense = []
-    value_expense = 0
+#     Returns:
+#         float: Promedio de gasto por día activo. Retorna 0 si no hay datos.
+#     """
+#     days_with_expense = []
+#     value_expense = 0
 
-    if not data:
-        return 0
+#     if not data:
+#         return 0
 
-    for expense_date in data:
-        days_with_expense.append(expense_date["date"][:10])
+#     for expense_date in data:
+#         days_with_expense.append(expense_date["date"][:10])
 
-    unique_days = set(days_with_expense)
+#     unique_days = set(days_with_expense)
 
-    for expense in data:
-        value_expense += expense["value"]
+#     for expense in data:
+#         value_expense += expense["value"]
 
-    average = value_expense / len(unique_days)
+#     average = value_expense / len(unique_days)
 
-    return average
+#     return average

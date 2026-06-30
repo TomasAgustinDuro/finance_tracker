@@ -1,50 +1,77 @@
-# Creación de menu y nueva lógica con dos archivos diferentes para diferentes informaciones
-
-from crud import read_history
-from menu import show_menu
-from exports import export_detailed_report, export_general_report
-from vistas import (
-    show_history,
+import streamlit as st
+from src.crud import read_history, delete_expense, modify_expense
+from src.vistas import (
     show_menu_add_expenses,
-    show_menu_delete_expense,
-    show_menu_modify_expense,
-    show_top_expenses,
-    show_percentage,
-    show_week,
     show_summary_cat,
-    show_filter_cat,
+    show_menu_modify_expense,
+    show_percentages_table,
+    show_week_table,
+    show_complete_table,
+    show_export_detail_table,
+    show_export_table
+)
+import pandas as pd
+from src.analytics import calculate_expense_percentage, get_week_expenses
+from src.exports import export_general_report, export_detailed_report
+
+
+data = read_history()
+
+st.set_page_config(page_title="Finance tracker", page_icon="💰", layout="centered")
+
+st.sidebar.title("Menu Principal")
+opcion = st.sidebar.radio(
+    "Selecciona una opción: ",
+    [
+        "Agregar un gasto nuevo",
+        "Ver resumen por categoria",
+        "Ver historial completo",
+        "Exportar historial detallado a TXT (con fechas)",
+        "Exportar resumen general a TXT"
+    ],
 )
 
-out = True
+if "Agregar un gasto nuevo" in opcion:
+    st.title("Agregue su gasto")
 
-# Flujo general
+    show_menu_add_expenses()
 
-while out:
-    data = read_history()
-    menu_option = show_menu()
+elif "Ver resumen por categoria" in opcion:
+    st.title("Resumen por categoria")
 
-    if menu_option == "1":
-        show_menu_add_expenses()
-    elif menu_option == "2":
-        show_summary_cat(data)
-    elif menu_option == "3":
-        show_history(data)
-    elif menu_option == "4":
-        export_detailed_report(data)
-    elif menu_option == "5":
-        export_general_report(data)
-    elif menu_option == "6":
-        show_menu_delete_expense(data)
-    elif menu_option == "7":
-        show_menu_modify_expense(data)
-    elif menu_option == "8":
-        show_filter_cat(data)
-    elif menu_option == "9":
-        show_percentage(data)
-    elif menu_option == "10":
-        show_week(data)
-    elif menu_option == "11":
-        show_top_expenses(data)
+    resumen = show_summary_cat(data)
+    st.dataframe(resumen)
 
-    else:
-        out = False
+elif "Ver historial completo" in opcion:
+    st.title("Ver historial completo")
+
+    if not data:
+        st.warning("No hay nada que mostrar")
+
+    tab_completo, tab_filtrado, tab_porcentajes, tab_week = st.tabs(
+        [
+            "Historial completo",
+            "Filtrar por categoria",
+            "Porcentaje por categoria",
+            "Gastos de la ultima semana",
+        ]
+    )
+
+    with tab_completo:
+        show_complete_table(data)
+
+    with tab_filtrado:
+        show_filter_tab(data)
+
+    with tab_porcentajes:
+        show_percentages_table(data)
+
+    with tab_week: 
+        show_week_table(data)
+
+elif "Exportar historial detallado a TXT (con fechas)" in opcion:
+    show_export_detail_table(data)
+
+elif "Exportar resumen general a TXT" in opcion:
+    show_export_table(data)
+
