@@ -70,5 +70,5 @@ def export_detailed_report(data: list) -> None:
     
         contenido_txt = "\n".join(lineas_reporte)
 
-        return contenido_txt
+    return contenido_txt
 
