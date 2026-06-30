@@ -1,9 +1,10 @@
 import streamlit as st
-from src.crud import read_history
+from src.crud import read_history, delete_expense, modify_expense
 from src.vistas import (
     show_menu_add_expenses,
     show_summary_cat,
     show_history,
+    show_menu_modify_expense
 )
 from src.filters import filter_by_category
 import pandas as pd
@@ -19,29 +20,26 @@ st.sidebar.title("Menu Principal")
 opcion = st.sidebar.radio(
     "Selecciona una opción: ",
     [
-        "1. Agregar un gasto nuevo",
-        "2. Ver resumen por categoria",
-        "3. Ver historial completo",
-        "4. Exportar historial detallado a TXT (con fechas)",
-        "5. Exportar resumen general a TXT9. Ver porcentaje de gastos por categoría",
-        "10. Ver gastos de los últimos 7 dias",
-        "11. Ver día con mayor gasto",
-        "12. Salir",
+        "Agregar un gasto nuevo",
+        "Ver resumen por categoria",
+        "Ver historial completo",
+        "Exportar historial detallado a TXT (con fechas)",
+        "Exportar resumen general a TXT"
     ],
 )
 
-if "1. " in opcion:
+if "Agregar un gasto nuevo" in opcion:
     st.title("Agregue su gasto")
 
     show_menu_add_expenses()
 
-elif "2. " in opcion:
+elif "Ver resumen por categoria" in opcion:
     st.title("Resumen por categoria")
 
     resumen = show_summary_cat(data)
     st.dataframe(resumen)
 
-elif "3. " in opcion:
+elif "Ver historial completo" in opcion:
     st.title("Ver historial completo")
 
     if not data:
@@ -76,8 +74,36 @@ elif "3. " in opcion:
 
         st.divider()
 
+        df_gastos = pd.DataFrame(data)
+        
+        seleccion = st.dataframe(df_gastos, use_container_width=True, on_select="rerun", selection_mode="single-row")
 
-        st.dataframe(data, use_container_width=True)
+        if seleccion['selection']['rows']:
+            indice_elegido = seleccion["selection"]["rows"][0]
+
+            gasto_elegido = data[indice_elegido]
+
+            st.write(f"Has elegido el gasto de: {gasto_elegido["category"]}")
+
+            col1, col2 = st.columns(2)
+
+            with col1:
+                if st.button("Eliminar gasto", use_container_width=True):
+                    if delete_expense(indice_elegido, data):
+                        st.success("Gasto eliminado exitosamente")
+                        st.rerun()
+            
+            with col2:
+                if st.button("Editar gasto", use_container_width=True):
+                    st.session_state.editando = True
+
+            if st.session_state.get("editando", False):
+                st.divider()
+                st.subheader("Modificar los campos del gasto")
+
+                show_menu_modify_expense(data, indice_elegido)
+            else: 
+                st.session_state.get("editando", False)
 
     with tab_filtrado:
         st.subheader("Filtrado por categoria")
@@ -142,7 +168,7 @@ elif "3. " in opcion:
             with st.expander("Ver valores detallados en tabla"):
                 st.dataframe(df_last_week, use_container_width=True)
 
-elif "4. " in opcion:
+elif "Exportar historial detallado a TXT (con fechas)" in opcion:
     st.title("Exportar historial detallado")
     st.write("Presiona el botón para descargar tu reporte")
 
@@ -161,7 +187,7 @@ elif "4. " in opcion:
             else:
                 st.warning("Algo ha salido mal")
 
-elif "5. " in opcion:
+elif "Exportar resumen general a TXT" in opcion:
     st.title("Exportar historial detallado")
     st.write("Presiona el botón para descargar tu reporte")
 
@@ -180,43 +206,3 @@ elif "5. " in opcion:
             else:
                 st.warning("Algo ha salido mal")
 
-# La idea es filtrar por categoria y poder eliminar y editar desde acá
-elif "6. " in opcion:
-    st.title("Ver gastos")
-
-
-# # Creación de menu y nueva lógica con dos archivos diferentes para diferentes informaciones
-
-# from crud import read_history
-# from menu import show_menu
-# from exports import export_detailed_report, export_general_report
-# from vistas import (
-#     show_history,
-#     show_menu_add_expenses,
-#     show_menu_delete_expense,
-#     show_menu_modify_expense,
-#     show_top_expenses,
-#     show_percentage,
-#     show_week,
-#     show_summary_cat,
-#     show_filter_cat,
-# )
-
-# out = True
-
-# # Flujo general
-
-# while out:
-#     data = read_history()
-#     menu_option = show_menu()
-
-#     elif menu_option == "6":
-#         show_menu_delete_expense(data)
-#     elif menu_option == "7":
-#         show_menu_modify_expense(data)
-
-#     elif menu_option == "11":
-#         show_top_expenses(data)
-
-#     else:
-#         out = False
