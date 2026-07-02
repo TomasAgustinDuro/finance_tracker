@@ -4,10 +4,12 @@ Encapsula todas las operaciones de red con boto3, aislando al resto del proyecto
 de la SDK de AWS. Ninguna otra capa debe importar boto3 directamente.
 """
 
-import boto3
 import json
 import logging
+
+import boto3
 from botocore.exceptions import ClientError
+
 from src.config import settings
 
 
@@ -27,7 +29,7 @@ class S3StorageService:
         las obtiene del archivo `.env`. Si alguna variable crítica falta, `Settings`
         lanza un error en el arranque de la aplicación.
         """
-        self.botoClient = boto3.client(
+        self.boto_client = boto3.client(
             "s3",
             region_name=settings.aws_default_region,
             aws_access_key_id=settings.aws_access_key_id,
@@ -50,7 +52,7 @@ class S3StorageService:
                 pueda manejarlo o loguearlo.
         """
         try:
-            file = self.botoClient.get_object(
+            file = self.boto_client.get_object(
                 Bucket=settings.aws_s3_bucket, Key="historial.json"
             )
             object_content = file["Body"].read().decode("utf-8")
@@ -58,7 +60,7 @@ class S3StorageService:
         except ClientError as e:
             if e.response["Error"]["Code"] == "NoSuchKey":
                 return []
-            logging.error(f"Error al leer historial.json desde S3: {e}")
+            logging.error("Error al leer historial.json desde S3: %s", e)
             raise e
 
     def save_file(self, data: list) -> bool:
@@ -78,7 +80,7 @@ class S3StorageService:
         """
         try:
             json_string = json.dumps(data, indent=4)
-            self.botoClient.put_object(
+            self.boto_client.put_object(
                 Bucket=settings.aws_s3_bucket,
                 Key="historial.json",
                 Body=json_string,
@@ -86,5 +88,5 @@ class S3StorageService:
             )
             return True
         except ClientError as e:
-            logging.error(f"Error al guardar historial.json en S3: {e}")
+            logging.error("Error al guardar historial.json en S3: %s", e)
             return False

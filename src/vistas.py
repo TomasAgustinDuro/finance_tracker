@@ -74,7 +74,8 @@ def show_filter_tab(data: list) -> None:
     gastos_filtrados = [g for g in data if g["category"] == categoria_seleccionada]
 
     st.write(
-        f"Se encontraron **{len(gastos_filtrados)}** registros para la categoria **{categoria_seleccionada}**"
+    f"Se encontraron **{len(gastos_filtrados)}** registros "
+        f"para la categoria **{categoria_seleccionada}**"
     )
     st.dataframe(gastos_filtrados, use_container_width=True)
 

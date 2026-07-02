@@ -6,7 +6,7 @@ no el renderizado visual.
 """
 
 import unittest
-from unittest.mock import MagicMock, patch, call
+from unittest.mock import MagicMock
 import sys
 import os
 

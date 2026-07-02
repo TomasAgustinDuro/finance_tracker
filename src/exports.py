@@ -42,7 +42,7 @@ def export_general_report(data: list) -> str | None:
     for category, value in summary.items():
         normalized_category = validate_category(category)
         if not normalized_category:
-            logging.warning(f"Categoría inválida ignorada en reporte general: '{category}'")
+            logging.warning("Categoría inválida ignorada en reporte general: '%s'", category)
             continue
         total_value += value
         report_lines.append(f"{normalized_category} : {value}")
@@ -77,7 +77,7 @@ def export_detailed_report(data: list) -> str:
 
         normalized_category = validate_category(category)
         if not normalized_category:
-            logging.warning(f"Categoría inválida ignorada en reporte detallado: '{category}'")
+            logging.warning("Categoría inválida ignorada en reporte detallado: '%s'", category)
             continue
 
         try:

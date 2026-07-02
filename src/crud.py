@@ -6,7 +6,6 @@ Usa lazy initialization para no instanciar el cliente S3 al momento del import,
 lo que facilita el testing y evita fallos por variables de entorno ausentes.
 """
 
-import json
 import uuid
 import logging
 from datetime import datetime
@@ -54,7 +53,7 @@ def read_history() -> list:
                 expense["value"] = float(expense["value"])
             return file
     except Exception as e:
-        logging.error(f"Error al leer el historial desde S3: {e}")
+        logging.error("Error al leer el historial desde S3: %s", e)
         return []
 
     return []
@@ -91,7 +90,7 @@ def add_expense(category_expense_formatted: str, value_expense_formatted: float)
         response = storage.save_file(expenses)
         return bool(response)
     except Exception as e:
-        logging.error(f"Error al agregar gasto en S3: {e}")
+        logging.error("Error al agregar gasto en S3: %s", e)
         return False
 
 
@@ -115,7 +114,7 @@ def delete_expense(indice: int, data: list) -> bool:
         response = storage.save_file(data)
         return bool(response)
     except Exception as e:
-        logging.error(f"Error al eliminar gasto en S3: {e}")
+        logging.error("Error al eliminar gasto en S3: %s", e)
         return False
 
 
@@ -153,5 +152,5 @@ def modify_expense(
         response = storage.save_file(data)
         return bool(response)
     except Exception as e:
-        logging.error(f"Error al modificar gasto en S3: {e}")
+        logging.error("Error al modificar gasto en S3: %s", e)
         return False

@@ -5,21 +5,17 @@ y evitar cualquier llamada real a AWS durante los tests.
 """
 
 import unittest
-from unittest.mock import MagicMock, patch
-
+from unittest.mock import MagicMock
 import sys
 import os
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-
-# El módulo crud usa lazy initialization con get_storage().
-# Parcheamos _storage_instance directamente para que get_storage() retorne el mock.
 import src.crud as _crud_module
+from src.crud import add_expense, read_history, delete_expense, modify_expense
 
 _mock_storage = MagicMock()
 _crud_module._storage_instance = _mock_storage
-
-from src.crud import add_expense, read_history, delete_expense, modify_expense
 
 
 class TestReadHistory(unittest.TestCase):

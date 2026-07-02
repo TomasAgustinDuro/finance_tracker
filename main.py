@@ -1,15 +1,20 @@
+"""Punto de entrada de la aplicación Finance Tracker.
+
+Inicializa la configuración de Streamlit, carga el historial desde S3
+y enruta cada opción del menú lateral a la vista correspondiente.
+"""
+
 import streamlit as st
 from src.crud import read_history
 from src.vistas import (
     show_menu_add_expenses,
     show_summary_cat,
-    show_menu_modify_expense,
     show_percentages_table,
     show_week_table,
     show_complete_table,
     show_export_detail_table,
     show_export_table,
-    show_filter_tab
+    show_filter_tab,
 )
 
 
@@ -64,7 +69,7 @@ elif "Ver historial completo" in opcion:
     with tab_porcentajes:
         show_percentages_table(data)
 
-    with tab_week: 
+    with tab_week:
         show_week_table(data)
 
 elif "Exportar historial detallado a TXT (con fechas)" in opcion:
@@ -72,4 +77,3 @@ elif "Exportar historial detallado a TXT (con fechas)" in opcion:
 
 elif "Exportar resumen general a TXT" in opcion:
     show_export_table(data)
-
