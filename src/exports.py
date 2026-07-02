@@ -1,74 +1,91 @@
-"""Capa de exportación a archivos de texto.
+"""Capa de exportación de reportes de gastos.
 
-Genera reportes TXT a partir del historial de gastos.
-No contiene lógica de negocio propia — delega cálculos a analytics.py.
+Genera strings formateados listos para descargarse como archivos TXT desde
+la UI de Streamlit. No escribe archivos en disco ni accede al storage directamente.
+Delega todos los cálculos a `analytics.py`.
 """
+
+import logging
+from datetime import datetime
+
+import streamlit as st
 
 from src.analytics import calculate_summary_by_category
 from src.validator import validate_category
-import streamlit as st
-
-GENERAL_REPORT_FILE = "resumen_general.txt"
-DETAILED_REPORT_FILE = "resumen_detallado.txt"
 
 
-def export_general_report(data: list) -> str | None :
-    """Exporta un resumen de gastos totales por categoría a resumen_general.txt.
+def export_general_report(data: list) -> str | None:
+    """Genera un reporte de texto con el total gastado por categoría.
 
-    Genera o sobreescribe el archivo con el total por categoría y el gran total acumulado.
-    Si no hay datos, imprime un aviso y no escribe el archivo.
+    Calcula el resumen por categoría usando `calculate_summary_by_category`,
+    formatea cada línea como `"Categoria : total"` y agrega el gran total
+    acumulado al final. Las categorías con nombre inválido se omiten con un
+    warning en el log (no interrumpen la generación del reporte).
 
     Args:
-        data (list[dict]): Lista de gastos con campos 'category' y 'value'.
+        data (list[dict]): Lista de gastos con campos `category` (str) y `value` (float).
 
     Returns:
-        None
+        str | None: String multilínea con el reporte listo para descargarse.
+            Retorna `None` si `data` está vacía o si el resumen no tiene contenido,
+            y muestra un `st.warning` en la UI.
     """
-
     summary = calculate_summary_by_category(data)
 
     if not summary:
         st.warning("No hay información para escribir")
-        return
+        return None
 
     total_value = 0
-
-    lineas_reporte=[]
+    report_lines = []
 
     for category, value in summary.items():
         normalized_category = validate_category(category)
+        if not normalized_category:
+            logging.warning("Categoría inválida ignorada en reporte general: '%s'", category)
+            continue
         total_value += value
-        lineas_reporte.append(f"{normalized_category} : {value}")
+        report_lines.append(f"{normalized_category} : {value}")
 
-    lineas_reporte.append(f"\nTotal Gastado {total_value}")
+    report_lines.append(f"Total Gastado {total_value}")
 
-    contenido_txt = "\n".join(lineas_reporte)
+    return "\n".join(report_lines)
 
-    return contenido_txt
 
-def export_detailed_report(data: list) -> None:
-    """Exporta el historial completo de gastos con fecha a resumen_detalado.txt.
+def export_detailed_report(data: list) -> str:
+    """Genera un reporte de texto con el detalle completo de cada gasto.
 
-    Genera o sobreescribe el archivo con una línea por gasto en formato:
-    'FECHA_ISO | CATEGORIA : MONTO'
+    Formatea cada gasto como `"DD-MM-YYYY HH:MM | Categoria : valor"`.
+    Las fechas en formato ISO 8601 se convierten al formato legible; si la
+    fecha tiene un formato inesperado, se usa el string original como fallback.
+    Las categorías con nombre inválido se omiten con un warning en el log.
 
     Args:
-        data (list[dict]): Lista de gastos con campos 'date', 'category' y 'value'.
+        data (list[dict]): Lista de gastos con campos `date` (str ISO 8601),
+            `category` (str) y `value` (float).
 
     Returns:
-        None
+        str: String multilínea con una línea por gasto. Retorna `""` si `data`
+            está vacía.
     """
-
-    lineas_reporte = []
+    report_lines = []
 
     for item in data:
         category = item["category"]
         value = item["value"]
-        date = item["date"]
+        date_str = item["date"]
+
         normalized_category = validate_category(category)
-        lineas_reporte.append(f"\n{date} | {normalized_category} : {value}\n")
-    
-        contenido_txt = "\n".join(lineas_reporte)
+        if not normalized_category:
+            logging.warning("Categoría inválida ignorada en reporte detallado: '%s'", category)
+            continue
 
-    return contenido_txt
+        try:
+            date_obj = datetime.fromisoformat(date_str)
+            date_formatted = date_obj.strftime("%d-%m-%Y %H:%M")
+        except (ValueError, TypeError):
+            date_formatted = date_str
 
+        report_lines.append(f"{date_formatted} | {normalized_category} : {value}")
+
+    return "\n".join(report_lines)

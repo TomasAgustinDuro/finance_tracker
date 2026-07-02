@@ -1,100 +1,104 @@
 """Tests unitarios para validator.py.
 
-Cubre el happy path y casos borde de validate_category y validate_mount.
+validate_category recibe un str.
+validate_mount recibe un número (int/float) — la UI de Streamlit ya hace el parsing.
 """
 
 import unittest
 
-from validator import validate_category, validate_mount
+import sys
+import os
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+
+from src.validator import validate_category, validate_mount
 
 
-class TestValidator(unittest.TestCase):
+class TestValidateCategory(unittest.TestCase):
+    """Tests para validate_category."""
 
-    # --- validate_category: happy path ---
+    # --- Happy path ---
 
-    def test_validate_category_returns_capitalized_string(self):
-        """Verifica que una categoría válida se retorna capitalizada y sin espacios."""
-        result = validate_category("comida")
-        self.assertEqual(result, "Comida")
+    def test_returns_capitalized_string(self):
+        """Verifica que una categoría minúscula válida se retorna capitalizada."""
+        self.assertEqual(validate_category("comida"), "Comida")
 
-    def test_validate_category_strips_surrounding_spaces(self):
-        """Verifica que los espacios sobrantes al inicio y final se eliminan."""
-        result = validate_category("  transporte  ")
-        self.assertEqual(result, "Transporte")
+    def test_strips_surrounding_spaces(self):
+        """Verifica que los espacios al inicio y final se eliminan."""
+        self.assertEqual(validate_category("  transporte  "), "Transporte")
 
-    def test_validate_category_accepts_multiword(self):
+    def test_accepts_multiword_category(self):
         """Verifica que una categoría con espacios internos es válida."""
         result = validate_category("servicios del hogar")
         self.assertEqual(result, "Servicios del hogar")
 
-    # --- validate_category: casos borde ---
+    def test_already_capitalized_stays_the_same(self):
+        """Verifica que una categoría ya capitalizada se retorna sin cambios."""
+        self.assertEqual(validate_category("Salud"), "Salud")
 
-    def test_validate_category_rejects_empty_string(self):
+    # --- Casos borde ---
+
+    def test_empty_string_returns_none(self):
         """Verifica que un string vacío retorna None."""
-        result = validate_category("")
-        self.assertIsNone(result)
+        self.assertIsNone(validate_category(""))
 
-    def test_validate_category_rejects_only_spaces(self):
+    def test_only_spaces_returns_none(self):
         """Verifica que un string de solo espacios retorna None."""
-        result = validate_category("   ")
-        self.assertIsNone(result)
+        self.assertIsNone(validate_category("   "))
 
-    def test_validate_category_rejects_string_with_digits(self):
-        """Verifica que una categoría con números retorna None."""
-        result = validate_category("Comida1")
-        self.assertIsNone(result)
+    def test_string_with_digits_returns_none(self):
+        """Verifica que una categoría que contiene números retorna None."""
+        self.assertIsNone(validate_category("Comida1"))
 
-    def test_validate_category_rejects_only_digits(self):
+    def test_only_digits_returns_none(self):
         """Verifica que un string solo numérico retorna None."""
-        result = validate_category("123")
-        self.assertIsNone(result)
+        self.assertIsNone(validate_category("123"))
 
-    def test_validate_category_rejects_special_characters(self):
-        """Verifica que una categoría con caracteres especiales retorna None."""
-        result = validate_category("comida!")
-        self.assertIsNone(result)
+    def test_special_characters_return_none(self):
+        """Verifica que caracteres especiales hacen que retorne None."""
+        self.assertIsNone(validate_category("comida!"))
 
-    # --- validate_mount: happy path ---
+    def test_hyphen_returns_none(self):
+        """Verifica que un guión en la categoría retorna None."""
+        self.assertIsNone(validate_category("super-mercado"))
 
-    def test_validate_mount_returns_integer_for_valid_input(self):
-        """Verifica que un monto válido se retorna como entero."""
-        result = validate_mount("500")
+
+class TestValidateMount(unittest.TestCase):
+    """Tests para validate_mount.
+
+    La función recibe un número (int o float) ya parseado por Streamlit's st.number_input.
+    """
+
+    # --- Happy path ---
+
+    def test_positive_integer_is_returned_as_is(self):
+        """Verifica que un entero positivo se retorna sin modificaciones."""
+        result = validate_mount(500)
         self.assertEqual(result, 500)
-        self.assertIsInstance(result, int)
 
-    def test_validate_mount_accepts_single_digit(self):
-        """Verifica que el mínimo válido (1) es aceptado."""
-        result = validate_mount("1")
-        self.assertEqual(result, 1)
+    def test_positive_float_is_returned_as_is(self):
+        """Verifica que un float positivo (ej: 9.99) se retorna sin modificaciones."""
+        result = validate_mount(9.99)
+        self.assertAlmostEqual(result, 9.99)
 
-    # --- validate_mount: casos borde ---
+    def test_minimum_valid_value_is_accepted(self):
+        """Verifica que 0.01 (mínimo positivo) es aceptado."""
+        result = validate_mount(0.01)
+        self.assertAlmostEqual(result, 0.01)
 
-    def test_validate_mount_rejects_zero(self):
+    # --- Casos borde ---
+
+    def test_zero_returns_none(self):
         """Verifica que el valor 0 retorna None."""
-        result = validate_mount("0")
-        self.assertIsNone(result)
+        self.assertIsNone(validate_mount(0))
 
-    def test_validate_mount_rejects_empty_string(self):
-        """Verifica que un string vacío retorna None."""
-        result = validate_mount("")
-        self.assertIsNone(result)
+    def test_zero_float_returns_none(self):
+        """Verifica que 0.0 retorna None."""
+        self.assertIsNone(validate_mount(0.0))
 
-    def test_validate_mount_rejects_float_string(self):
-        """Verifica que un decimal como string retorna None."""
-        result = validate_mount("3.14")
-        self.assertIsNone(result)
-
-    def test_validate_mount_rejects_negative_number(self):
+    def test_negative_number_returns_none(self):
         """Verifica que un número negativo retorna None."""
-        result = validate_mount("-5")
-        self.assertIsNone(result)
+        self.assertIsNone(validate_mount(-10))
 
-    def test_validate_mount_rejects_text(self):
-        """Verifica que un string no numérico retorna None."""
-        result = validate_mount("abc")
-        self.assertIsNone(result)
-
-    def test_validate_mount_rejects_number_with_spaces(self):
-        """Verifica que un número con espacios retorna None."""
-        result = validate_mount(" 100 ")
-        self.assertIsNone(result)
+    def test_none_input_returns_none(self):
+        """Verifica que pasar None retorna None sin lanzar excepción."""
+        self.assertIsNone(validate_mount(None))

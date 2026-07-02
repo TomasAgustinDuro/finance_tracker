@@ -1,152 +1,110 @@
 """Tests unitarios para vistas.py.
 
-Cubre las funciones testeables de la capa de presentación usando unittest.mock
-para simular input() y aislar las dependencias de I/O.
+Todas las funciones usan Streamlit, por lo que se mockea el módulo completo
+antes de importar vistas. Se testean únicamente los retornos y la lógica pura,
+no el renderizado visual.
 """
 
 import unittest
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock
+import sys
+import os
 
-from vistas import (
-    process_expense_modification,
-    show_history,
-    show_top_expenses,
-    show_summary_cat,
-    show_week,
-    show_percentage,
-)
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+
+# ---------------------------------------------------------------------------
+# Patch global de Streamlit: evita que cualquier llamada a st.* falle
+# ya que en tests no existe un servidor Streamlit corriendo.
+# ---------------------------------------------------------------------------
+_mock_st = MagicMock()
+sys.modules["streamlit"] = _mock_st
+
+# Importaciones después del patch
+from src.vistas import show_summary_cat, show_history
 
 
-SAMPLE_EXPENSES = [
-    {
-        "id": "abc123",
-        "category": "Comida",
-        "value": 500,
-        "date": "2026-06-20T10:00:00",
-    },
-    {
-        "id": "def456",
-        "category": "Transporte",
-        "value": 300,
-        "date": "2026-06-21T15:30:00",
-    },
+SAMPLE_DATA = [
+    {"id": "abc123", "category": "Comida",     "value": 500, "date": "2026-06-20T10:00:00"},
+    {"id": "def456", "category": "Transporte", "value": 300, "date": "2026-06-21T15:30:00"},
 ]
 
 
-class TestProcessExpenseModification(unittest.TestCase):
-    """Tests para process_expense_modification."""
+class TestShowSummaryCat(unittest.TestCase):
+    """Tests para show_summary_cat.
 
-    def _make_expenses(self) -> list:
-        """Retorna una copia fresca de SAMPLE_EXPENSES para cada test."""
-        return [expense.copy() for expense in SAMPLE_EXPENSES]
+    La función delega el cálculo a calculate_summary_by_category y retorna el dict.
+    Con lista vacía llama a st.warning y retorna None.
+    """
 
-    def test_ignores_out_of_range_index(self):
-        """Verifica que un índice fuera de rango no lanza excepción ni modifica datos."""
-        gastos = self._make_expenses()
-        # índice 99 es mayor que len(gastos), no debe hacer nada
-        process_expense_modification(gastos, "99")
-        self.assertEqual(gastos[0]["category"], "Comida")
+    def setUp(self):
+        _mock_st.reset_mock()
 
-    def test_ignores_non_digit_index(self):
-        """Verifica que un índice no numérico no lanza excepción."""
-        gastos = self._make_expenses()
-        process_expense_modification(gastos, "abc")
-        self.assertEqual(gastos[0]["value"], 500)
+    def test_returns_dict_with_category_totals(self):
+        """Verifica que retorna un dict con el total acumulado por categoría."""
+        result = show_summary_cat(SAMPLE_DATA)
+        self.assertIsInstance(result, dict)
+        self.assertEqual(result.get("Comida"),     500)
+        self.assertEqual(result.get("Transporte"), 300)
 
-    def test_ignores_zero_index(self):
-        """Verifica que el índice 0 (inválido, la UI usa base 1) no modifica nada."""
-        gastos = self._make_expenses()
-        process_expense_modification(gastos, "0")
-        self.assertEqual(gastos[0]["category"], "Comida")
+    def test_empty_data_returns_none_and_warns(self):
+        """Verifica que con lista vacía retorna None y llama a st.warning."""
+        result = show_summary_cat([])
+        self.assertIsNone(result)
+        _mock_st.warning.assert_called_once()
 
-    @patch("vistas.modify_expense", return_value=True)
-    @patch("builtins.input", side_effect=["Salud", "800", "Y"])
-    def test_modifies_both_fields_on_confirmation(self, mock_input: MagicMock, mock_modify: MagicMock) -> None:
-        """Verifica que con confirmación Y se llama modify_expense con los valores correctos."""
-        gastos = self._make_expenses()
-        process_expense_modification(gastos, "1")
-        mock_modify.assert_called_once_with(gastos, 0, "Salud", 800)
-
-    @patch("vistas.modify_expense", return_value=True)
-    @patch("builtins.input", side_effect=["", "800", "Y"])
-    def test_modifies_only_value_when_category_empty(self, mock_input: MagicMock, mock_modify: MagicMock) -> None:
-        """Verifica que si la categoría queda vacía solo se actualiza el monto."""
-        gastos = self._make_expenses()
-        process_expense_modification(gastos, "1")
-        mock_modify.assert_called_once_with(gastos, 0, None, 800)
-
-    @patch("vistas.modify_expense", return_value=True)
-    @patch("builtins.input", side_effect=["Salud", "", "Y"])
-    def test_modifies_only_category_when_value_empty(self, mock_input: MagicMock, mock_modify: MagicMock) -> None:
-        """Verifica que si el monto queda vacío solo se actualiza la categoría."""
-        gastos = self._make_expenses()
-        process_expense_modification(gastos, "1")
-        mock_modify.assert_called_once_with(gastos, 0, "Salud", None)
-
-    @patch("vistas.modify_expense")
-    @patch("builtins.input", side_effect=["Salud", "800", "N"])
-    def test_does_not_modify_when_confirmation_is_no(self, mock_input: MagicMock, mock_modify: MagicMock) -> None:
-        """Verifica que con confirmación N no se llama modify_expense."""
-        gastos = self._make_expenses()
-        process_expense_modification(gastos, "1")
-        mock_modify.assert_not_called()
-
-    @patch("vistas.modify_expense")
-    @patch("builtins.input", side_effect=["", ""])
-    def test_does_not_modify_when_both_fields_empty(self, mock_input: MagicMock, mock_modify: MagicMock) -> None:
-        """Verifica que si ambos campos quedan vacíos no se llama modify_expense."""
-        gastos = self._make_expenses()
-        process_expense_modification(gastos, "1")
-        mock_modify.assert_not_called()
+    def test_multiple_expenses_same_category_are_accumulated(self):
+        """Verifica que varios gastos de la misma categoría se acumulan."""
+        data = [
+            {"id": "a", "category": "Comida", "value": 200, "date": "2026-01-01T00:00:00"},
+            {"id": "b", "category": "Comida", "value": 300, "date": "2026-01-02T00:00:00"},
+        ]
+        result = show_summary_cat(data)
+        self.assertEqual(result["Comida"], 500)
 
 
-class TestShowFunctions(unittest.TestCase):
-    """Tests para las funciones de visualización que imprimen en consola."""
+class TestShowHistory(unittest.TestCase):
+    """Tests para show_history.
 
-    @patch("builtins.print")
-    def test_show_history_prints_each_expense(self, mock_print: MagicMock) -> None:
-        """Verifica que show_history imprime una línea por cada gasto."""
-        show_history(SAMPLE_EXPENSES)
-        self.assertEqual(mock_print.call_count, 2)
+    La función mapea los datos y llama a st.dataframe.
+    Con lista vacía llama a st.warning.
+    """
 
-    @patch("builtins.print")
-    def test_show_history_empty_data_prints_nothing(self, mock_print: MagicMock) -> None:
-        """Verifica que con lista vacía show_history no imprime nada."""
+    def setUp(self):
+        _mock_st.reset_mock()
+
+    def test_calls_st_dataframe_with_data(self):
+        """Verifica que st.dataframe es invocado cuando hay gastos."""
+        show_history(SAMPLE_DATA)
+        _mock_st.dataframe.assert_called_once()
+
+    def test_empty_data_calls_st_warning(self):
+        """Verifica que con lista vacía se llama a st.warning."""
         show_history([])
-        mock_print.assert_not_called()
+        _mock_st.warning.assert_called_once()
 
-    @patch("builtins.print")
-    def test_show_top_expenses_prints_result(self, mock_print: MagicMock) -> None:
-        """Verifica que show_top_expenses imprime el día con mayor gasto."""
-        show_top_expenses(SAMPLE_EXPENSES)
-        mock_print.assert_called_once()
-        output = mock_print.call_args[0][0]
-        self.assertIn("2026-06-21", output)
+    def test_maps_date_to_dd_mm_yyyy_format(self):
+        """Verifica que la fecha ISO se convierte al formato DD/MM/YYYY en el payload enviado a st.dataframe."""
+        show_history(SAMPLE_DATA)
+        call_args = _mock_st.dataframe.call_args[0][0]
+        dates = [row["date"] for row in call_args]
+        self.assertIn("20/06/2026", dates)
+        self.assertIn("21/06/2026", dates)
 
-    @patch("builtins.print")
-    def test_show_top_expenses_empty_data_prints_warning(self, mock_print: MagicMock) -> None:
-        """Verifica que con lista vacía show_top_expenses imprime el mensaje de aviso."""
-        show_top_expenses([])
-        mock_print.assert_called_once_with("No hay información para mostrar")
+    def test_maps_category_to_capitalized(self):
+        """Verifica que la categoría se presenta capitalizada en el payload."""
+        lowercase_data = [
+            {"id": "x", "category": "comida", "value": 100, "date": "2026-01-01T00:00:00"}
+        ]
+        show_history(lowercase_data)
+        call_args = _mock_st.dataframe.call_args[0][0]
+        self.assertEqual(call_args[0]["category"], "Comida")
 
-    @patch("builtins.print")
-    def test_show_summary_cat_prints_each_category(self, mock_print: MagicMock) -> None:
-        """Verifica que show_summary_cat imprime una línea por categoría."""
-        show_summary_cat(SAMPLE_EXPENSES)
-        printed_lines = [call[0][0] for call in mock_print.call_args_list]
-        self.assertTrue(any("Comida" in line for line in printed_lines))
-        self.assertTrue(any("Transporte" in line for line in printed_lines))
-
-    @patch("builtins.print")
-    def test_show_summary_cat_empty_data_prints_warning(self, mock_print: MagicMock) -> None:
-        """Verifica que con lista vacía show_summary_cat imprime el mensaje de aviso."""
-        show_summary_cat([])
-        mock_print.assert_called_once_with("No hay información para mostrar")
-
-    @patch("builtins.print")
-    def test_show_percentage_empty_data_prints_warning(self, mock_print: MagicMock) -> None:
-        """Verifica que con lista vacía show_percentage imprime el mensaje de aviso."""
-        show_percentage([])
-        mock_print.assert_called_once_with(
-            "No hay información con la que calcualr los porcentajes"
-        )
+    def test_excludes_entries_without_category(self):
+        """Verifica que los gastos sin campo 'category' son ignorados silenciosamente."""
+        mixed_data = [
+            {"id": "a", "category": "Comida", "value": 100, "date": "2026-01-01T00:00:00"},
+            {"id": "b", "value": 200, "date": "2026-01-02T00:00:00"},  # sin category
+        ]
+        show_history(mixed_data)
+        call_args = _mock_st.dataframe.call_args[0][0]
+        self.assertEqual(len(call_args), 1)
