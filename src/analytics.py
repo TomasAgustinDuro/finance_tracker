@@ -1,167 +1,124 @@
 """Capa de lógica de negocio para análisis y cálculos sobre gastos.
 
 Todas las funciones son puras: reciben datos como parámetro y retornan
-resultados sin modificar estado global ni acceder a archivos.
+resultados sin modificar estado global ni acceder a archivos o servicios externos.
 """
 
 from datetime import datetime, timedelta
 
+
 def calculate_expense_percentage(data: list) -> dict:
     """Calcula el porcentaje que representa cada categoría sobre el total gastado.
 
+    Agrupa los gastos por categoría, suma sus valores y calcula el peso
+    relativo de cada una sobre el total. Los porcentajes retornados suman 100.
+
     Args:
-        data (list[dict]): Lista de gastos con campos 'category' y 'value'.
+        data (list[dict]): Lista de gastos con campos `category` (str) y `value` (float).
 
     Returns:
-        dict[str, float]: Diccionario {categoria: porcentaje}. Los valores suman 100.
-            Retorna dict vacío si la lista está vacía.
+        dict[str, float]: Diccionario `{categoria: porcentaje}`.
+            Retorna `{}` si `data` está vacía.
     """
-    total_value = 0
-
     if not data:
         return {}
 
+    total_value = 0
     summary = {}
 
     for item in data:
         item_category = item["category"]
         item_value = item["value"]
-        total_value += item['value']
+        total_value += item_value
         summary[item_category] = summary.get(item_category, 0) + item_value
 
-    percentages = {}
+    return {
+        category: (value / total_value) * 100
+        for category, value in summary.items()
+    }
 
-    for category, value in summary.items():
-        percentages[category] = (value / total_value) * 100
-
-    return percentages
 
 def get_week_expenses(data: list) -> list:
-    """Retorna los gastos registrados en los últimos 7 días, ordenados del más reciente al más antiguo.
+    """Retorna los gastos registrados en los últimos 7 días, ordenados por fecha ascendente.
+
+    La ventana temporal se calcula dinámicamente respecto a `datetime.now()`,
+    por lo que el resultado varía según el momento de ejecución.
 
     Args:
-        data (list[dict]): Lista de gastos con campo 'date' en formato ISO 8601.
+        data (list[dict]): Lista de gastos con campo `date` en formato ISO 8601.
 
     Returns:
-        list[dict]: Gastos dentro de la ventana de 7 días, ordenados por fecha descendente.
-            Retorna lista vacía si no hay gastos en ese período.
+        list[dict]: Gastos dentro de la ventana de 7 días, ordenados del más
+            antiguo al más reciente. Retorna `[]` si no hay gastos en ese período
+            o si `data` está vacía.
     """
     if not data:
         return []
 
     today = datetime.now()
-    week = today - timedelta(days=7)
+    week_ago = today - timedelta(days=7)
 
-    last_expenses = [
-        last
-        for last in data
-        if week <= datetime.fromisoformat(last["date"]) <= today
+    recent_expenses = [
+        expense
+        for expense in data
+        if week_ago <= datetime.fromisoformat(expense["date"]) <= today
     ]
 
-    if not last_expenses:
-        return[]
+    if not recent_expenses:
+        return []
 
-    sorted_expenses = sorted(last_expenses, key=lambda item: item["date"])
+    return sorted(recent_expenses, key=lambda expense: expense["date"])
 
-    return sorted_expenses
 
 def get_top_expense_day(data: list) -> dict:
     """Identifica el día con mayor gasto acumulado en todo el historial.
 
-    Agrupa los gastos por fecha (YYYY-MM-DD) y retorna el día cuya suma es mayor.
+    Agrupa los gastos por fecha (truncada a `YYYY-MM-DD`) y retorna el día
+    cuya suma es la más alta. En caso de empate, retorna el primero según
+    el orden de iteración del diccionario interno (no determinístico).
 
     Args:
-        data (list[dict]): Lista de gastos con campos 'date' y 'value'.
+        data (list[dict]): Lista de gastos con campos `date` (str ISO 8601)
+            y `value` (float).
 
     Returns:
-        dict: Diccionario con claves 'date' (str, formato YYYY-MM-DD) y 'value' (int).
-            Retorna dict vacío si la lista está vacía.
+        dict: Diccionario con claves `date` (str, formato `YYYY-MM-DD`) y
+            `value` (float, total acumulado ese día).
+            Retorna `{}` si `data` está vacía.
     """
     if not data:
         return {}
 
-    more_expenses = {}
+    daily_totals: dict[str, float] = {}
 
     for item in data:
-        more_expenses[item["date"][:10]] = (
-            more_expenses.get(item["date"][:10], 0) + item["value"]
-        )
+        day_key = item["date"][:10]
+        daily_totals[day_key] = daily_totals.get(day_key, 0) + item["value"]
 
-    max_date = max(more_expenses, key=more_expenses.get)
-    max_value = more_expenses[max_date]
+    max_date = max(daily_totals, key=daily_totals.get)
 
-    return {"date": max_date, "value": max_value}
+    return {"date": max_date, "value": daily_totals[max_date]}
+
 
 def calculate_summary_by_category(data: list) -> dict:
     """Calcula el total gastado agrupado por categoría.
 
+    Itera sobre todos los gastos y acumula los valores por categoría
+    usando el nombre exacto como clave (sensible a mayúsculas).
+
     Args:
-        data (list[dict]): Lista de gastos con campos 'category' y 'value'.
+        data (list[dict]): Lista de gastos con campos `category` (str) y `value` (float).
 
     Returns:
-        dict[str, int]: Diccionario {categoria: total_gastado}.
-            Retorna dict vacío si la lista está vacía.
+        dict[str, float]: Diccionario `{categoria: total_gastado}`.
+            Retorna `{}` si `data` está vacía.
     """
     if not data:
-        return{}
+        return {}
 
-    summary = {}
+    summary: dict[str, float] = {}
+
     for item in data:
         summary[item["category"]] = summary.get(item["category"], 0) + item["value"]
 
     return summary
-
-# # Helper
-# def calculate_daily_average(data: list) -> float:
-#     """Calcula el promedio diario de gasto para los últimos 7 días.
-
-#     Suma todos los gastos de la última semana y divide por 7, independientemente
-#     de cuántos días tuvieron actividad real.
-
-#     Args:
-#         data (list[dict]): Lista completa de gastos del historial.
-
-#     Returns:
-#         float: Promedio diario de los últimos 7 días. Retorna 0 si no hay gastos en ese período.
-#     """
-#     last_week = get_week_expenses(data)
-#     total_week = 0
-
-#     if not last_week:
-#         return 0
-
-#     for expense_value in last_week:
-#         total_week += expense_value["value"]
-
-#     return total_week / 7
-
-# # Helper
-# def calculate_historical_daily_average(data: list) -> float:
-#     """Calcula el promedio diario de gasto a lo largo de todo el historial.
-
-#     Divide el total gastado entre la cantidad de días únicos con al menos un gasto registrado,
-#     ignorando los días sin actividad.
-
-#     Args:
-#         data (list[dict]): Lista completa de gastos del historial.
-
-#     Returns:
-#         float: Promedio de gasto por día activo. Retorna 0 si no hay datos.
-#     """
-#     days_with_expense = []
-#     value_expense = 0
-
-#     if not data:
-#         return 0
-
-#     for expense_date in data:
-#         days_with_expense.append(expense_date["date"][:10])
-
-#     unique_days = set(days_with_expense)
-
-#     for expense in data:
-#         value_expense += expense["value"]
-
-#     average = value_expense / len(unique_days)
-
-#     return average

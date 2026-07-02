@@ -1,5 +1,5 @@
 import streamlit as st
-from src.crud import read_history, delete_expense, modify_expense
+from src.crud import read_history
 from src.vistas import (
     show_menu_add_expenses,
     show_summary_cat,
@@ -8,11 +8,9 @@ from src.vistas import (
     show_week_table,
     show_complete_table,
     show_export_detail_table,
-    show_export_table
+    show_export_table,
+    show_filter_tab
 )
-import pandas as pd
-from src.analytics import calculate_expense_percentage, get_week_expenses
-from src.exports import export_general_report, export_detailed_report
 
 
 data = read_history()
