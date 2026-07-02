@@ -28,6 +28,8 @@ Está pensada para quienes quieren un control simple y visual de sus finanzas pe
 finance_tracker/
 ├── main.py                  # Punto de entrada Streamlit. Routing de vistas.
 ├── requirements.txt         # Dependencias del proyecto.
+├── Dockerfile               # Imagen Docker de la aplicación.
+├── .dockerignore            # Archivos excluidos del contexto de build.
 ├── .env                     # Variables de entorno (credenciales AWS, no commitear).
 ├── src/
 │   ├── __init__.py
@@ -95,7 +97,7 @@ Los gastos se persisten en `historial.json` dentro del bucket S3 configurado, co
 ## Instalación y requisitos
 
 **Requisitos:**
-- Python 3.10 o superior (se usa la sintaxis `str | None` de union types, disponible desde 3.10).
+- Python 3.10 o superior (se usa la sintaxis `str | None` de union types, disponible desde 3.10), o Docker.
 - Cuenta de AWS con un bucket S3 creado y credenciales con permisos `s3:GetObject` y `s3:PutObject`.
 
 **Instalación:**
@@ -123,6 +125,8 @@ AWS_S3_BUCKET=nombre-de-tu-bucket
 
 ## Cómo ejecutar
 
+### Sin Docker
+
 Desde la raíz del proyecto con el entorno virtual activo:
 
 ```bash
@@ -130,6 +134,38 @@ streamlit run main.py
 ```
 
 Streamlit abrirá automáticamente `http://localhost:8501` en el navegador. El sidebar de la izquierda contiene el menú de navegación.
+
+### Con Docker
+
+**Construir la imagen:**
+
+```bash
+docker build -t finance-tracker .
+```
+
+**Ejecutar el contenedor** pasando las credenciales de AWS en runtime:
+
+```bash
+docker run --env-file .env -p 8501:8501 finance-tracker
+```
+
+O pasando las variables individualmente:
+
+```bash
+docker run \
+  -e AWS_ACCESS_KEY_ID=tu_access_key \
+  -e AWS_SECRET_ACCESS_KEY=tu_secret_key \
+  -e AWS_DEFAULT_REGION=us-east-1 \
+  -e AWS_S3_BUCKET=nombre-de-tu-bucket \
+  -p 8501:8501 \
+  finance-tracker
+```
+
+La app queda disponible en `http://localhost:8501`.
+
+> ⚠️ Las credenciales **nunca** deben incluirse en la imagen. El `.dockerignore` excluye el `.env` del contexto de build — siempre inyectarlas en runtime con `--env-file` o `-e`.
+
+El contenedor incluye un `HEALTHCHECK` que verifica cada 30 segundos que Streamlit responde correctamente en `/_stcore/health`.
 
 ---
 
