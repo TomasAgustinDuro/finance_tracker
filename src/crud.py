@@ -14,6 +14,8 @@ from botocore.exceptions import ClientError
 
 from src.storage.s3_storage import S3StorageService
 
+logger = logging.getLogger(__name__)
+
 _storage_instance = None
 
 
@@ -59,13 +61,13 @@ def read_history() -> list:
                 try:
                     expense["value"] = float(expense["value"])
                     valid_expenses.append(expense)
-                except (KeyError, ValueError, TypeError) as e:
-                    logging.warning("Gasto corrupto ignorado: %s", expense)
+                except (KeyError, ValueError, TypeError):
+                    logger.warning("Gasto corrupto ignorado: %s", expense)
                     continue
 
         return valid_expenses
-    except Exception as e:
-        logging.error("Error al leer el historial desde S3: %s", e)
+    except ClientError as e:
+        logger.error("Error al leer el historial desde S3: %s", e)
         return []
 
 
@@ -101,8 +103,8 @@ def add_expense(
         expenses.append(new_expense)
         response = storage.save_file(expenses)
         return bool(response)
-    except Exception as e:
-        logging.error("Error al agregar gasto en S3: %s", e)
+    except ClientError as e:
+        logger.error("Error al agregar gasto en S3: %s", e)
         return False
 
 
@@ -130,7 +132,7 @@ def delete_expense(indice: int, data: list) -> bool:
         response = storage.save_file(data)
         return bool(response)
     except ClientError as e:
-        logging.error("Error al eliminar gasto en S3: %s", e)
+        logger.error("Error al eliminar gasto en S3: %s", e)
         return False
 
 
@@ -172,5 +174,5 @@ def modify_expense(
         response = storage.save_file(data)
         return bool(response)
     except ClientError as e:
-        logging.error("Error al modificar gasto en S3: %s", e)
+        logger.error("Error al modificar gasto en S3: %s", e)
         return False

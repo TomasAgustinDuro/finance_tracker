@@ -129,7 +129,12 @@ class TestAddExpense(unittest.TestCase):
 
     def test_returns_false_on_storage_exception(self):
         """Verifica que retorna False si S3 lanza una excepción inesperada."""
-        _mock_storage.save_file.side_effect = Exception("S3 unavailable")
+        from botocore.exceptions import ClientError
+
+        error_response = {
+            "Error": {"Code": "ServiceUnavailable", "Message": "Service unavailable"}
+        }
+        _mock_storage.save_file.side_effect = ClientError(error_response, "PutObject")
         result = add_expense("Comida", 100)
         self.assertFalse(result)
         _mock_storage.save_file.side_effect = None  # limpia el side_effect
