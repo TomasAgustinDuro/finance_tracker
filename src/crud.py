@@ -38,27 +38,35 @@ def read_history() -> list:
 
     Convierte el campo `value` de cada gasto a `float` para garantizar
     consistencia de tipos independientemente del formato almacenado en S3.
-    En caso de cualquier error (red, credenciales, JSON inválido), retorna
-    una lista vacía sin propagar la excepción hacia la UI.
+    Por ítem, captura conversiones fallidas (KeyError, ValueError, TypeError)
+    para no perder todo el historial por un registro corrupto.
+    En caso de error crítico (red, credenciales), retorna lista vacía.
 
     Returns:
-        list[dict]: Lista de gastos. Cada gasto contiene los campos
+        list[dict]: Lista de gastos válidos. Cada gasto contiene los campos
             `id` (str), `category` (str), `value` (float) y `date` (str ISO 8601).
-            Retorna `[]` si el historial está vacío o si ocurre un error.
+            Retorna `[]` si el historial está vacío, si ocurre un error crítico,
+            o si todos los registros son corruptos.
     """
     try:
         storage = get_storage()
         file = storage.read_file()
 
+        valid_expenses = []
+
         if file:
             for expense in file:
-                expense["value"] = float(expense["value"])
-            return file
+                try:
+                    expense["value"] = float(expense["value"])
+                    valid_expenses.append(expense)
+                except (KeyError, ValueError, TypeError) as e:
+                    logging.warning("Gasto corrupto ignorado: %s", expense)
+                    continue
+
+        return valid_expenses
     except Exception as e:
         logging.error("Error al leer el historial desde S3: %s", e)
         return []
-
-    return []
 
 
 def add_expense(
