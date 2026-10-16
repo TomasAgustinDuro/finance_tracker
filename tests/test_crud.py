@@ -28,7 +28,14 @@ class TestReadHistory(unittest.TestCase):
 
     def test_returns_list_when_storage_returns_data(self):
         """Verifica que retorna la lista de gastos cuando S3 responde correctamente."""
-        sample = [{"id": "abc", "category": "Comida", "value": "500", "date": "2026-01-01T10:00:00"}]
+        sample = [
+            {
+                "id": "abc",
+                "category": "Comida",
+                "value": "500",
+                "date": "2026-01-01T10:00:00",
+            }
+        ]
         _mock_storage.read_file.return_value = sample
         result = read_history()
         self.assertEqual(len(result), 1)
@@ -36,7 +43,14 @@ class TestReadHistory(unittest.TestCase):
 
     def test_converts_value_to_float(self):
         """Verifica que el campo 'value' se convierte a float al leer."""
-        sample = [{"id": "abc", "category": "Comida", "value": "250.5", "date": "2026-01-01T10:00:00"}]
+        sample = [
+            {
+                "id": "abc",
+                "category": "Comida",
+                "value": "250.5",
+                "date": "2026-01-01T10:00:00",
+            }
+        ]
         _mock_storage.read_file.return_value = sample
         result = read_history()
         self.assertIsInstance(result[0]["value"], float)
@@ -50,7 +64,14 @@ class TestReadHistory(unittest.TestCase):
 
     def test_returns_empty_list_on_invalid_value(self):
         """Verifica que retorna [] si algún 'value' no es convertible a float."""
-        invalid = [{"id": "x", "category": "Comida", "value": "no_es_numero", "date": "2026-01-01T00:00:00"}]
+        invalid = [
+            {
+                "id": "x",
+                "category": "Comida",
+                "value": "no_es_numero",
+                "date": "2026-01-01T00:00:00",
+            }
+        ]
         _mock_storage.read_file.return_value = invalid
         result = read_history()
         self.assertEqual(result, [])
@@ -76,18 +97,25 @@ class TestAddExpense(unittest.TestCase):
         saved_data = _mock_storage.save_file.call_args[0][0]
         self.assertEqual(len(saved_data), 1)
         self.assertEqual(saved_data[0]["category"], "Transporte")
-        self.assertEqual(saved_data[0]["value"],    200)
+        self.assertEqual(saved_data[0]["value"], 200)
 
     def test_new_expense_has_id_and_date(self):
         """Verifica que el nuevo gasto incluye los campos 'id' y 'date' generados automáticamente."""
         add_expense("Salud", 100)
         saved_data = _mock_storage.save_file.call_args[0][0]
-        self.assertIn("id",   saved_data[0])
+        self.assertIn("id", saved_data[0])
         self.assertIn("date", saved_data[0])
 
     def test_each_expense_gets_unique_id(self):
         """Verifica que dos gastos consecutivos reciben ids distintos."""
-        existing = [{"id": "first-id", "category": "Comida", "value": 100.0, "date": "2026-01-01T00:00:00"}]
+        existing = [
+            {
+                "id": "first-id",
+                "category": "Comida",
+                "value": 100.0,
+                "date": "2026-01-01T00:00:00",
+            }
+        ]
         _mock_storage.read_file.return_value = existing
         add_expense("Ocio", 50)
         saved_data = _mock_storage.save_file.call_args[0][0]
@@ -117,9 +145,24 @@ class TestDeleteExpense(unittest.TestCase):
 
     def _make_expenses(self) -> list:
         return [
-            {"id": "a", "category": "Comida",     "value": 500.0, "date": "2026-01-01T10:00:00"},
-            {"id": "b", "category": "Transporte", "value": 300.0, "date": "2026-01-02T15:00:00"},
-            {"id": "c", "category": "Salud",      "value": 100.0, "date": "2026-01-03T08:00:00"},
+            {
+                "id": "a",
+                "category": "Comida",
+                "value": 500.0,
+                "date": "2026-01-01T10:00:00",
+            },
+            {
+                "id": "b",
+                "category": "Transporte",
+                "value": 300.0,
+                "date": "2026-01-02T15:00:00",
+            },
+            {
+                "id": "c",
+                "category": "Salud",
+                "value": 100.0,
+                "date": "2026-01-03T08:00:00",
+            },
         ]
 
     def test_returns_true_on_success(self):
@@ -134,8 +177,8 @@ class TestDeleteExpense(unittest.TestCase):
         delete_expense(1, data)  # elimina Transporte
         saved_data = _mock_storage.save_file.call_args[0][0]
         categories = [e["category"] for e in saved_data]
-        self.assertIn("Comida",    categories)
-        self.assertIn("Salud",     categories)
+        self.assertIn("Comida", categories)
+        self.assertIn("Salud", categories)
         self.assertNotIn("Transporte", categories)
 
     def test_returns_false_when_storage_fails(self):
@@ -151,6 +194,14 @@ class TestDeleteExpense(unittest.TestCase):
         result = delete_expense(99, data)
         self.assertFalse(result)
 
+    def test_returns_false_on_negative_index(self):
+        """Verifica que retorna False con índice negativo (guard clause)."""
+        data = self._make_expenses()
+        result = delete_expense(-1, data)
+        self.assertFalse(result)
+        # Verifica que NO se llamó a save_file (no modificó nada)
+        _mock_storage.save_file.assert_not_called()
+
 
 class TestModifyExpense(unittest.TestCase):
     """Tests para modify_expense."""
@@ -161,7 +212,14 @@ class TestModifyExpense(unittest.TestCase):
         _mock_storage.save_file.return_value = True
 
     def _make_expenses(self) -> list:
-        return [{"id": "a", "category": "Comida", "value": 400.0, "date": "2026-01-01T10:00:00"}]
+        return [
+            {
+                "id": "a",
+                "category": "Comida",
+                "value": 400.0,
+                "date": "2026-01-01T10:00:00",
+            }
+        ]
 
     def test_modifies_category_only(self):
         """Verifica que solo la categoría se actualiza cuando new_value es None."""
@@ -169,7 +227,7 @@ class TestModifyExpense(unittest.TestCase):
         modify_expense(data, 0, new_category="Transporte", new_value=None)
         saved_data = _mock_storage.save_file.call_args[0][0]
         self.assertEqual(saved_data[0]["category"], "Transporte")
-        self.assertEqual(saved_data[0]["value"],    400.0)
+        self.assertEqual(saved_data[0]["value"], 400.0)
 
     def test_modifies_value_only(self):
         """Verifica que solo el monto se actualiza cuando new_category es None."""
@@ -177,7 +235,7 @@ class TestModifyExpense(unittest.TestCase):
         modify_expense(data, 0, new_category=None, new_value=1200)
         saved_data = _mock_storage.save_file.call_args[0][0]
         self.assertEqual(saved_data[0]["category"], "Comida")
-        self.assertEqual(saved_data[0]["value"],    1200)
+        self.assertEqual(saved_data[0]["value"], 1200)
 
     def test_modifies_both_fields(self):
         """Verifica que ambos campos se actualizan correctamente."""
@@ -185,7 +243,7 @@ class TestModifyExpense(unittest.TestCase):
         modify_expense(data, 0, new_category="Salud", new_value=750)
         saved_data = _mock_storage.save_file.call_args[0][0]
         self.assertEqual(saved_data[0]["category"], "Salud")
-        self.assertEqual(saved_data[0]["value"],    750)
+        self.assertEqual(saved_data[0]["value"], 750)
 
     def test_preserves_original_when_both_params_are_none(self):
         """Verifica que con ambos parámetros None el gasto no se altera."""
@@ -193,7 +251,7 @@ class TestModifyExpense(unittest.TestCase):
         modify_expense(data, 0, new_category=None, new_value=None)
         saved_data = _mock_storage.save_file.call_args[0][0]
         self.assertEqual(saved_data[0]["category"], "Comida")
-        self.assertEqual(saved_data[0]["value"],    400.0)
+        self.assertEqual(saved_data[0]["value"], 400.0)
 
     def test_returns_true_on_success(self):
         """Verifica que retorna True cuando S3 confirma el guardado."""
@@ -207,3 +265,19 @@ class TestModifyExpense(unittest.TestCase):
         data = self._make_expenses()
         result = modify_expense(data, 0, new_category="Ocio", new_value=50)
         self.assertFalse(result)
+
+    def test_returns_false_on_invalid_index(self):
+        """Verifica que retorna False con un índice fuera de rango (guard clause)."""
+        data = self._make_expenses()
+        result = modify_expense(data, 99, new_category="Ocio")
+        self.assertFalse(result)
+        # Verifica que NO se llamó a save_file (no modificó nada)
+        _mock_storage.save_file.assert_not_called()
+
+    def test_returns_false_on_negative_index(self):
+        """Verifica que retorna False con índice negativo (guard clause)."""
+        data = self._make_expenses()
+        result = modify_expense(data, -1, new_category="Ocio")
+        self.assertFalse(result)
+        # Verifica que NO se llamó a save_file (no modificó nada)
+        _mock_storage.save_file.assert_not_called()
