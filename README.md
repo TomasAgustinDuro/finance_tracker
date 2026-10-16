@@ -220,7 +220,63 @@ Reporte línea por línea con la fecha formateada, categoría y monto de cada ga
 
 ---
 
-## Contribuir
+## Security & Deployment
+
+### Local development
+
+The application binds to `127.0.0.1` (localhost) by default. This means:
+- ✅ Only accessible from your local machine
+- ✅ No risk of accidental public exposure
+- ✅ Safe for development and testing
+
+### Production deployment
+
+**Important:** Finance Tracker does NOT include built-in authentication. For production use:
+
+1. **Behind an authenticated reverse proxy** (recommended):
+   - Deploy Nginx, Caddy, or Apache in front of the app
+   - Configure the reverse proxy to handle authentication (OAuth2, SAML, HTTP Basic Auth, etc.)
+   - Forward requests only from authenticated users to Streamlit
+   - Streamlit remains on `127.0.0.1` (internal only)
+
+   Example with Nginx:
+   ```nginx
+   server {
+       listen 443 ssl;
+       server_name example.com;
+       
+       location / {
+           auth_request /auth;
+           proxy_pass http://127.0.0.1:8501;
+       }
+       
+       location /auth {
+           # Call your auth service (OAuth2 proxy, keycloak, etc)
+       }
+   }
+   ```
+
+2. **AWS deployment** (if using ECS/Fargate):
+   - Run the container inside a private subnet
+   - Use an Application Load Balancer (ALB) with authentication in front
+   - Never expose port 8501 directly to the internet
+
+3. **Environment variable for flexibility**:
+   If you need to change the bind address, set `SERVER_ADDRESS` before running:
+   ```bash
+   export SERVER_ADDRESS=0.0.0.0  # Use only behind a proxy!
+   streamlit run main.py --server.address $SERVER_ADDRESS
+   ```
+
+### AWS S3 credentials
+
+- ✅ Credentials are loaded from environment variables (`.env` file or container secrets)
+- ✅ Never hardcode credentials in the source code
+- ✅ Use IAM roles in production (ECS Task Roles, EC2 Instance Profiles) instead of access keys
+- ✅ Rotate credentials regularly
+- ✅ Restrict S3 bucket policies to least-privilege access
+
+---
 
 1. Hacé un fork del repositorio y creá una rama descriptiva:
    ```bash
