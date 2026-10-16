@@ -21,14 +21,18 @@ def validate_category(category: str) -> str | None:
             (ej: `"Comida"`, `"Servicios del hogar"`).
             `None` si el string está vacío, contiene números o caracteres especiales.
     """
+
     formatted_category = category.capitalize().strip()
+
+    if not formatted_category or len(formatted_category) > 50:
+        return None
 
     if formatted_category.replace(" ", "").isalpha() and formatted_category != "":
         return formatted_category
     return None
 
 
-def validate_mount(mount: float | int | None) -> float | None:
+def validate_mount(mount: float | None) -> float | None:
     """Valida que el monto sea un número positivo mayor a cero.
 
     Recibe el valor ya parseado por `st.number_input` (float o int).
@@ -41,6 +45,6 @@ def validate_mount(mount: float | int | None) -> float | None:
         float | None: El mismo valor si es válido (positivo y mayor a cero).
             `None` si el valor es `None`, cero o negativo.
     """
-    if mount and mount > 0:
+    if mount and isinstance(mount, (int, float)) and mount > 0:
         return mount
     return None
