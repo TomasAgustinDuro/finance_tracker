@@ -6,11 +6,13 @@ Usa lazy initialization para no instanciar el cliente S3 al momento del import,
 lo que facilita el testing y evita fallos por variables de entorno ausentes.
 """
 
-import uuid
 import logging
+import uuid
 from datetime import datetime
-from src.storage.s3_storage import S3StorageService
 
+from botocore.exceptions import ClientError
+
+from src.storage.s3_storage import S3StorageService
 
 _storage_instance = None
 
@@ -59,7 +61,9 @@ def read_history() -> list:
     return []
 
 
-def add_expense(category_expense_formatted: str, value_expense_formatted: float) -> bool:
+def add_expense(
+    category_expense_formatted: str, value_expense_formatted: float
+) -> bool:
     """Agrega un nuevo gasto al historial y lo persiste en S3.
 
     Genera automáticamente un `id` único (UUID hex) y la `date` con la
@@ -108,12 +112,16 @@ def delete_expense(indice: int, data: list) -> bool:
         bool: `True` si se eliminó y guardó correctamente, `False` si el índice
             está fuera de rango o si hubo un error de I/O.
     """
+    # Guard clause: rechaza índices fuera de rango
+    if not (0 <= indice < len(data)):
+        return False
+
     try:
         del data[indice]
         storage = get_storage()
         response = storage.save_file(data)
         return bool(response)
-    except Exception as e:
+    except ClientError as e:
         logging.error("Error al eliminar gasto en S3: %s", e)
         return False
 
@@ -139,6 +147,10 @@ def modify_expense(
     Returns:
         bool: `True` si se guardó correctamente en S3, `False` si hubo un error de I/O.
     """
+    # Guard clause: rechaza índices fuera de rango
+    if not (0 <= indice < len(data)):
+        return False
+
     current_expense = data[indice]
 
     if new_category:
@@ -151,6 +163,6 @@ def modify_expense(
         storage = get_storage()
         response = storage.save_file(data)
         return bool(response)
-    except Exception as e:
+    except ClientError as e:
         logging.error("Error al modificar gasto en S3: %s", e)
         return False
