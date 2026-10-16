@@ -11,15 +11,16 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     """Esquema de configuración de la aplicación.
 
-    Todas las variables marcadas sin valor por defecto son obligatorias.
-    Si no están presentes en el archivo .env o en el entorno, pydantic
-    lanza un ValidationError al iniciar la aplicación.
+    Las credenciales de AWS (access_key_id, secret_access_key) son opcionales.
+    Si no están presentes, boto3 usa la cadena de credenciales (env vars,
+    .aws/credentials, IAM role, instance profile, etc.).
+    El bucket S3 sigue siendo obligatorio.
     """
 
     app_env: str = "local"
 
-    aws_access_key_id: str
-    aws_secret_access_key: str
+    aws_access_key_id: str | None = None
+    aws_secret_access_key: str | None = None
     aws_default_region: str = "us-east-1"
     aws_s3_bucket: str
 

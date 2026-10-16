@@ -33,16 +33,26 @@ class S3StorageService:
         """Inicializa el cliente boto3 con las credenciales del entorno.
 
         Las credenciales se leen desde `settings` (pydantic-settings), que a su vez
-        las obtiene del archivo `.env`. Si alguna variable crítica falta, `Settings`
-        lanza un error en el arranque de la aplicación.
+        las obtiene del archivo `.env`, variables de entorno, o cadena de credenciales
+        de AWS (IAM role, instance profile, etc.).
+
+        Si aws_access_key_id y aws_secret_access_key son None, boto3 las resuelve
+        automáticamente usando la cadena de credenciales estándar.
         """
-        self.boto_client = boto3.client(
-            "s3",
-            config=s3_config,
-            region_name=settings.aws_default_region,
-            aws_access_key_id=settings.aws_access_key_id,
-            aws_secret_access_key=settings.aws_secret_access_key,
-        )
+        # Construir kwargs solo con valores no-None para dejar resolver credenciales
+        boto_kwargs = {
+            "service_name": "s3",
+            "config": s3_config,
+            "region_name": settings.aws_default_region,
+        }
+
+        # Solo pasar credenciales si están configuradas explícitamente
+        if settings.aws_access_key_id is not None:
+            boto_kwargs["aws_access_key_id"] = settings.aws_access_key_id
+        if settings.aws_secret_access_key is not None:
+            boto_kwargs["aws_secret_access_key"] = settings.aws_secret_access_key
+
+        self.boto_client = boto3.client(**boto_kwargs)
 
     def read_file(self) -> list:
         """Lee y deserializa el historial de gastos desde S3.
