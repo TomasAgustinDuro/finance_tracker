@@ -15,6 +15,21 @@ services:
       # Port mapping: host:container. Streamlit binds to 127.0.0.1 (localhost only).
       # For production access, deploy behind an authenticated reverse proxy (Nginx, Caddy, etc).
       - '8501:8501'
+    
+    # Security hardening
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    
+    # Health check: verify Streamlit is responsive
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:8501/_stcore/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
 
 # The commented out section below is an example of how to define a PostgreSQL
 # database that your application can use. `depends_on` tells Docker Compose to
