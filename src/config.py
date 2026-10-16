@@ -17,7 +17,6 @@ class Settings(BaseSettings):
     """
 
     app_env: str = "local"
-    app_port: int = 8000
 
     aws_access_key_id: str
     aws_secret_access_key: str
