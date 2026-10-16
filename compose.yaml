@@ -12,6 +12,8 @@ services:
     build:
       context: .
     ports:
+      # Port mapping: host:container. Streamlit binds to 127.0.0.1 (localhost only).
+      # For production access, deploy behind an authenticated reverse proxy (Nginx, Caddy, etc).
       - '8501:8501'
 
 # The commented out section below is an example of how to define a PostgreSQL
