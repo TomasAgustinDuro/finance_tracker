@@ -44,6 +44,7 @@ Thumbs.db
 # Project specific
 historial.json
 *.txt
+!requirements.txt
 *.deb
 
 # Logs
