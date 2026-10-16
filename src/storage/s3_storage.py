@@ -8,9 +8,16 @@ import json
 import logging
 
 import boto3
+from botocore.config import Config
 from botocore.exceptions import ClientError
 
 from src.config import settings
+
+s3_config = Config(
+    connect_timeout=5,
+    read_timeout=10,
+    retries={"max_attempts": 3, "mode": "standard"},
+)
 
 
 class S3StorageService:
@@ -31,6 +38,7 @@ class S3StorageService:
         """
         self.boto_client = boto3.client(
             "s3",
+            config=s3_config,
             region_name=settings.aws_default_region,
             aws_access_key_id=settings.aws_access_key_id,
             aws_secret_access_key=settings.aws_secret_access_key,
