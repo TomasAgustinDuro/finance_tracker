@@ -281,3 +281,64 @@ class TestModifyExpense(unittest.TestCase):
         self.assertFalse(result)
         # Verifica que NO se llamó a save_file (no modificó nada)
         _mock_storage.save_file.assert_not_called()
+
+    def test_skips_corrupted_expense_but_keeps_valid_ones(self):
+        """Verifica que un gasto corrupto se ignora pero otros válidos se retornan."""
+        data = [
+            {
+                "id": "a",
+                "category": "Comida",
+                "value": "500",
+                "date": "2026-01-01T10:00:00",
+            },
+            {
+                "id": "b",
+                "category": "Transporte",
+                "value": "abc",
+                "date": "2026-01-02T15:00:00",
+            },  # corrupto
+            {
+                "id": "c",
+                "category": "Salud",
+                "value": "100",
+                "date": "2026-01-03T08:00:00",
+            },
+        ]
+        _mock_storage.read_file.return_value = data
+        result = read_history()
+
+        # Debe retornar 2 gastos válidos (el del medio se ignora)
+        self.assertEqual(len(result), 2)
+        self.assertEqual(result[0]["id"], "a")
+        self.assertEqual(result[0]["value"], 500.0)
+        self.assertEqual(result[1]["id"], "c")
+        self.assertEqual(result[1]["value"], 100.0)
+
+    def test_skips_missing_value_field(self):
+        """Verifica que un gasto sin 'value' se ignora gracefully."""
+        data = [
+            {
+                "id": "a",
+                "category": "Comida",
+                "value": "500",
+                "date": "2026-01-01T10:00:00",
+            },
+            {
+                "id": "b",
+                "category": "Transporte",
+                "date": "2026-01-02T15:00:00",
+            },  # falta 'value'
+            {
+                "id": "c",
+                "category": "Salud",
+                "value": "100",
+                "date": "2026-01-03T08:00:00",
+            },
+        ]
+        _mock_storage.read_file.return_value = data
+        result = read_history()
+
+        # Debe retornar 2 gastos válidos
+        self.assertEqual(len(result), 2)
+        self.assertEqual(result[0]["id"], "a")
+        self.assertEqual(result[1]["id"], "c")
